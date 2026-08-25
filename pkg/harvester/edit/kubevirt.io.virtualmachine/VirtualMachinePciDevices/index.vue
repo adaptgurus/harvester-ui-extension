@@ -5,6 +5,7 @@ import LabeledSelect from '@shell/components/form/LabeledSelect';
 import Banner from '@components/Banner/Banner.vue';
 import remove from 'lodash/remove';
 import { set } from '@shell/utils/object';
+import { uniq } from '@shell/utils/array';
 import { HCI } from '../../../types';
 import DeviceList from './DeviceList';
 import CompatibilityMatrix from '../CompatibilityMatrix';
@@ -52,31 +53,29 @@ export default {
     }
 
     const selectedDevices = [];
-    const oldFormatDevices = [];
 
     const vmDevices = this.value?.domain?.devices?.hostDevices || [];
-    const otherDevices = this.otherDevices(vmDevices).map(({ name }) => name);
     const vmDeviceNames = vmDevices.map(({ name }) => name);
 
     this.pciDevices.forEach((row) => {
       row.allowDisable = !vmDeviceNames.includes(row.metadata.name);
     });
 
-    vmDevices.forEach(({ name, deviceName }) => {
-      const checkName = (deviceName || '').split('/')?.[1];
+    // When off, read from spec; otherwise the spec name is a placeholder ('provisioned'),
+    // so read the real allocated device names from the deviceAllocationDetails annotation.
+    const hostDeviceNames = this.vm.isOff ? [
+      ...vmDevices.map(({ name }) => name),
+    ] : [
+      ...Object.values(this.vm?.provisionedHostDevices || {}).reduce((acc, devices) => [...acc, ...devices], []),
+    ];
 
-      if (checkName && name.includes(checkName) && !otherDevices.includes(name)) {
-        oldFormatDevices.push(name);
-      } else if (this.enabledDevices.find((device) => device?.metadata?.name === name)) {
+    uniq(hostDeviceNames).forEach((name) => {
+      if (this.enabledDevices.find((device) => device?.metadata?.name === name)) {
         selectedDevices.push(name);
       }
     });
 
-    if (oldFormatDevices.length > 0) {
-      this.oldFormatDevices = oldFormatDevices;
-    } else {
-      this.selectedDevices = selectedDevices;
-    }
+    this.selectedDevices = selectedDevices;
   },
 
   data() {
