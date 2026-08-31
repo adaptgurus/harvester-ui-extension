@@ -24,7 +24,7 @@ export default function (plugin: IPlugin) {
   // Built-in icon
   plugin.metadata.icon = require('./icon.svg');
 
-  plugin.addProduct(require('./config/harvester-cluster'));
+  plugin.addProduct(require('./config/layersentry-cluster'));
 
   plugin.addDashboardStore(harvesterCommonStore.config.namespace, harvesterCommonStore.specifics, harvesterCommonStore.config);
   plugin.addDashboardStore(harvesterStore.config.namespace, harvesterStore.specifics, harvesterStore.config, harvesterStore.init);
