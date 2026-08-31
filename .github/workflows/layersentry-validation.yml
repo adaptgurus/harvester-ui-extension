@@ -5,81 +5,93 @@ on:
     branches:
       - feat/layersentry-ui-rebrand
   pull_request:
-    types: [edited, synchronize]
+    types: [opened, edited, synchronize, reopened]
     branches:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: layersentry-validation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
-    runs-on: self-hosted
-    timeout-minutes: 90
+    name: Lint build and brand safety
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
-          fetch-depth: 0
-
-      - name: Runner capability probe
-        shell: pwsh
-        run: |
-          Write-Host "Runner OS: $env:RUNNER_OS"
-          Write-Host "Runner arch: $env:RUNNER_ARCH"
-          Write-Host "Computer: $env:COMPUTERNAME"
-          Get-Command git -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-          Get-Command node -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-          Get-Command yarn -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-          Get-Command bash -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-          Get-Command kubectl -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-          Get-Command docker -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-          Get-Command wsl -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          fetch-depth: 1
 
       - name: Setup Node 24
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
+          node-version: '24'
 
       - name: Ensure Yarn Classic
-        shell: pwsh
         run: |
-          if (-not (Get-Command yarn -ErrorAction SilentlyContinue)) {
-            npm install --global yarn@1.22.22
-          }
+          npm install --global yarn@1.22.22
           node --version
           yarn --version
 
       - name: Frozen dependency install
-        shell: pwsh
         run: yarn install --frozen-lockfile
 
       - name: Lint
-        shell: pwsh
         run: yarn lint
 
-      - name: Build Harvester extension package
-        shell: pwsh
-        run: |
-          $bash = (Get-Command bash -ErrorAction SilentlyContinue)
-          if (-not $bash) { throw 'Git Bash/bash is required by the Rancher build-pkg script on this runner.' }
-          bash -lc "yarn build-pkg harvester"
+      - name: Build LayerSentry extension package
+        run: yarn build-pkg harvester
 
-      - name: Presentation-safety and brand-leak scan
-        shell: pwsh
+      - name: Validate generated package
         run: |
-          Write-Host 'Changed files versus main:'
-          git diff --name-only origin/main...HEAD
-          Write-Host 'Potential visible upstream-brand references in presentation files:'
-          git grep -n -i -E 'Harvester|harvesterhci|SUSE|Rancher' -- 'pkg/harvester/*.vue' 'pkg/harvester/**/*.vue' 'pkg/harvester/l10n/*.yaml' 'pkg/harvester/package.json' 'pkg/harvester/icon.svg' | Select-Object -First 500
-          Write-Host 'Internal identifiers are expected and are not automatically failures.'
+          set -euo pipefail
+          out='dist-pkg/harvester-1.10.0-dev'
+          entry="$out/harvester-1.10.0-dev.umd.min.js"
+          test -d "$out"
+          test -s "$entry"
+          count=$(find "$out" -type f | wc -l)
+          bytes=$(stat -c '%s' "$entry")
+          echo "Generated files: $count"
+          echo "UMD entrypoint bytes: $bytes"
+          test "$count" -gt 1
+          test "$bytes" -gt 1000000
 
-      - name: Cluster tooling probe
-        shell: pwsh
-        continue-on-error: true
+      - name: Validate LayerSentry presentation contract
         run: |
-          if (Get-Command kubectl -ErrorAction SilentlyContinue) {
-            kubectl config current-context
-            kubectl get nodes -o wide
-          } else {
-            Write-Host 'kubectl not installed/configured on runner.'
-          }
+          set -euo pipefail
+          test -s pkg/harvester/assets/layersentry/layer-sentry-icon.svg
+          test -s pkg/harvester/assets/layersentry/layer-sentry-logo.svg
+          test -s pkg/harvester/config/layersentry-cluster.js
+          test -s pkg/harvester/l10n/layersentry-en-us.yaml
+          test -s pkg/harvester/styles/layersentry/index.scss
+
+          grep -q "PRODUCT_NAME = 'harvester'" pkg/harvester/config/harvester.ts
+          grep -q 'layer-sentry-icon.svg' pkg/harvester/config/harvester.ts
+          grep -q 'LayerSentry enterprise HCI' pkg/harvester/package.json
+          grep -q 'catalog.cattle.io/display-name.*LayerSentry' pkg/harvester/package.json
+          grep -q 'feat/layersentry-ui-rebrand/pkg/harvester/icon.svg' pkg/harvester/package.json
+          grep -q 'LayerSentry Cluster:' pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -q 'LayerSentry Monitoring' pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -q 'LayerSentry Support' pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -q 'LayerSentry' dist-pkg/harvester-1.10.0-dev/harvester-1.10.0-dev.umd.min.js
+
+          echo 'LayerSentry brand markers and internal compatibility identifiers are valid.'
+
+      - name: Guard known operator-facing upstream labels
+        run: |
+          set -euo pipefail
+          overlay='pkg/harvester/l10n/layersentry-en-us.yaml'
+          grep -q "productLabel: LayerSentry" "$overlay"
+          grep -q "header: 'LayerSentry Cluster: {cluster}'" "$overlay"
+          grep -q "description: LayerSentry supports filesystem volumes" "$overlay"
+          grep -q "successMessage: 'LayerSentry can successfully connect" "$overlay"
+          grep -q "'harv-log-level': Configure LayerSentry" "$overlay"
+          grep -q "'harv-auto-disk-provision-paths': Specify disks" "$overlay"
+          grep -q "'harv-kubeconfig-default-token-ttl-minutes': TTL in minutes applied to LayerSentry" "$overlay"
+          echo 'Known operator-facing Harvester labels are overridden by LayerSentry locale entries.'
