@@ -10,9 +10,7 @@ const LAYERSENTRY_LOGO = require('../assets/layersentry/layer-sentry-icon.svg');
 function hasConfiguredLogo(store) {
   const settings = store.getters['management/all']?.(MANAGEMENT.SETTING) || [];
 
-  return settings.some((setting) =>
-    [SETTING.LOGO_DARK, SETTING.LOGO_LIGHT].includes(setting.id) && !!setting.value
-  );
+  return settings.some((setting) => [SETTING.LOGO_DARK, SETTING.LOGO_LIGHT].includes(setting.id) && !!setting.value);
 }
 
 export function syncLayerSentrySingleProductBranding(store) {
