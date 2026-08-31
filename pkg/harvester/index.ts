@@ -8,6 +8,7 @@ import customValidators from './validators';
 import { PRODUCT_NAME } from './config/harvester';
 import { defineAsyncComponent } from 'vue';
 import './styles/vue-flow.scss';
+import './styles/layersentry/index.scss';
 
 // Init the package
 export default function (plugin: IPlugin) {
