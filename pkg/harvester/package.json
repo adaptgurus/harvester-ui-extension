@@ -11,7 +11,7 @@
       "catalog.cattle.io/ui-extensions-version": ">= 3.0.0 < 4.0.0"
     }
   },
-  "icon": "https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/feat/layersentry-ui-rebrand/pkg/harvester/icon.svg",
+  "icon": "https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/main/pkg/harvester/icon.svg",
   "scripts": {
     "dev": "./node_modules/.bin/nuxt dev",
     "nuxt": "./node_modules/.bin/nuxt"
