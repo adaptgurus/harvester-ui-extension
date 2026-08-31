@@ -6,7 +6,7 @@ import harvesterCommonStore from './store/harvester-common';
 import harvesterStore from './store/harvester-store';
 import customValidators from './validators';
 import { PRODUCT_NAME } from './config/harvester';
-import layersentryEnUs from './l10n/layersentry-en-us';
+import layersentryEnUs from './l10n/layersentry-en-us.yaml';
 import { defineAsyncComponent } from 'vue';
 import './styles/vue-flow.scss';
 import './styles/layersentry/index.scss';
