@@ -6,6 +6,7 @@ import harvesterCommonStore from './store/harvester-common';
 import harvesterStore from './store/harvester-store';
 import customValidators from './validators';
 import { PRODUCT_NAME } from './config/harvester';
+import layersentryEnUs from './l10n/layersentry-en-us';
 import { defineAsyncComponent } from 'vue';
 import './styles/vue-flow.scss';
 import './styles/layersentry/index.scss';
@@ -17,6 +18,10 @@ export default function (plugin: IPlugin) {
 
   // Auto-import model, detail, edit from the folders
   importTypes(plugin);
+
+  // Apply a narrow LayerSentry presentation overlay after the upstream locale.
+  // Translation keys remain harvester.* to preserve compatibility.
+  plugin.register('l10n', 'en-us', () => layersentryEnUs);
 
   // Provide plugin metadata from package.json
   plugin.metadata = require('./package.json');
