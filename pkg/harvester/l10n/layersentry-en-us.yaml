@@ -19,6 +19,13 @@ harvester:
   virtualMachine:
     filesystem:
       description: LayerSentry supports filesystem volumes for virtual machines via virtiofs.
+  networkPolicy:
+    banner: 'Network policies must be used for VMs attached to overlay networks. See the <a href="{url}" target="_blank">upstream documentation</a> for network-policy behavior.'
+  setting:
+    httpProxy:
+      warning: 'WARNING: <br/> If you configure "http-proxy" and "https-proxy", you must also put the LayerSentry node&apos;s CIDR into "no-proxy"; otherwise cluster networking can be disrupted.'
+    harvesterMonitoring:
+      label: LayerSentry Monitoring
   upgrade:
     releaseTip: 'Please read the upgrade documentation carefully. You can view details in the <a href="{url}" target="_blank">upstream release notes</a>.'
     checkReady: I have read and understood the upgrade instructions related to this LayerSentry deployment.
