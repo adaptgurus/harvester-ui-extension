@@ -75,7 +75,9 @@ jobs:
           grep -q 'layer-sentry-icon.svg' pkg/harvester/config/harvester.ts
           grep -q 'LayerSentry enterprise HCI' pkg/harvester/package.json
           grep -q 'catalog.cattle.io/display-name.*LayerSentry' pkg/harvester/package.json
-          grep -q 'feat/layersentry-ui-rebrand/pkg/harvester/icon.svg' pkg/harvester/package.json
+          grep -q 'main/pkg/harvester/icon.svg' pkg/harvester/package.json
+          grep -q 'mergeWithReplace' pkg/harvester/index.ts
+          grep -q 'supportCustomLogo: true' pkg/harvester/config/layersentry-cluster.js
           grep -q 'LayerSentry Cluster:' pkg/harvester/l10n/layersentry-en-us.yaml
           grep -q 'LayerSentry Monitoring' pkg/harvester/l10n/layersentry-en-us.yaml
           grep -q 'LayerSentry Support' pkg/harvester/l10n/layersentry-en-us.yaml
