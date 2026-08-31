@@ -1,0 +1,92 @@
+name: LayerSentry 1.8.2 Production Validation
+
+on:
+  push:
+    branches:
+      - release-layersentry-v1.8.2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: layersentry-1.8.2-production-validation
+  cancel-in-progress: true
+
+jobs:
+  production-gate:
+    name: Stable build and release safety
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+
+      - name: Ensure Yarn Classic
+        run: |
+          npm install --global yarn@1.22.22
+          node --version
+          yarn --version
+
+      - name: Verify stable release identity
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const root = require('./package.json');
+          const pkg = require('./pkg/harvester/package.json');
+          if (root.version !== '1.8.2') throw new Error(`root version must be 1.8.2, got ${root.version}`);
+          if (pkg.version !== '1.8.2') throw new Error(`UI package version must be 1.8.2, got ${pkg.version}`);
+          if (/-dev|-rc|-alpha|-beta/i.test(root.version) || /-dev|-rc|-alpha|-beta/i.test(pkg.version)) {
+            throw new Error('prerelease/dev version detected');
+          }
+          if (pkg.rancher?.annotations?.['catalog.cattle.io/display-name'] !== 'LayerSentry') {
+            throw new Error('LayerSentry catalog display name missing');
+          }
+          console.log(`Stable release identity: root=${root.version}, package=${pkg.version}`);
+          NODE
+
+      - name: Frozen dependency install
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Build stable LayerSentry extension
+        run: yarn build-pkg harvester
+
+      - name: Validate production output and private-label contract
+        run: |
+          set -euo pipefail
+          test -s pkg/harvester/icon.svg
+          test -s pkg/harvester/config/layersentry-cluster.js
+          test -s pkg/harvester/l10n/layersentry-en-us.yaml
+          test -s pkg/harvester/styles/layersentry/index.scss
+          grep -q "PRODUCT_NAME = 'harvester'" pkg/harvester/config/harvester.ts
+          grep -q 'LayerSentry' pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -q 'LayerSentry' pkg/harvester/package.json
+          test -d dist-pkg
+          count=$(find dist-pkg -type f | wc -l)
+          bytes=$(du -sb dist-pkg | awk '{print $1}')
+          echo "Generated files=$count bytes=$bytes"
+          test "$count" -gt 1
+          test "$bytes" -gt 1000000
+
+      - name: Production dependency audit
+        id: audit
+        continue-on-error: true
+        run: yarn audit --groups dependencies --level high
+
+      - name: Record audit result
+        if: always()
+        run: |
+          echo "Dependency audit outcome: ${{ steps.audit.outcome }}"
+          if [ "${{ steps.audit.outcome }}" != "success" ]; then
+            echo 'High/critical dependency findings or audit-service errors require review before final production sign-off.'
+          fi
