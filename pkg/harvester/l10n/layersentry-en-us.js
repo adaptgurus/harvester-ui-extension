@@ -13,8 +13,10 @@ export default {
         tip: 'Upload an icon to replace the LayerSentry favicon in the browser tab. Max file size is 20KB.'
       }
     },
-    bundle: {
-      titleDescription: 'Collect system-related logs in LayerSentry to assist with troubleshooting and support.'
+    modal: {
+      bundle: {
+        titleDescription: 'Collect system-related logs in LayerSentry to assist with troubleshooting and support.'
+      }
     },
     tableHeaders: {
       routeConnectivityTooltip: 'Connectivity between the VM network and the management network used by LayerSentry nodes.'
