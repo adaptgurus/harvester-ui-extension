@@ -1,16 +1,16 @@
 .cluster-dashboard-glance {
   align-items: center;
   background: var(--ls-surface);
-  border: 1px solid var(--ls-border) !important;
-  border-left: 4px solid var(--ls-brand-navy) !important;
+  border: 1px solid var(--ls-border);
+  border-left: 4px solid var(--ls-brand-navy);
   border-radius: var(--ls-radius-md);
   box-shadow: var(--ls-shadow-soft);
   gap: 28px;
   margin: 8px 0 24px;
-  padding: 16px 20px !important;
+  padding: 16px 20px;
 
   > * {
-    margin-right: 0 !important;
+    margin-right: 0;
     min-width: 0;
   }
 
@@ -60,7 +60,7 @@
   }
 
   .layersentry-brand-section > h3:first-child {
-    margin-top: 0 !important;
+    margin-top: 0;
   }
 }
 
