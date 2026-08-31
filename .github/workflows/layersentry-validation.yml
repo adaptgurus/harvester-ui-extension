@@ -1,0 +1,81 @@
+name: LayerSentry Validation
+
+on:
+  push:
+    branches:
+      - feat/layersentry-ui-rebrand
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: self-hosted
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+
+      - name: Runner capability probe
+        shell: pwsh
+        run: |
+          Write-Host "Runner OS: $env:RUNNER_OS"
+          Write-Host "Runner arch: $env:RUNNER_ARCH"
+          Write-Host "Computer: $env:COMPUTERNAME"
+          Get-Command git -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          Get-Command node -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          Get-Command yarn -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          Get-Command bash -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          Get-Command kubectl -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          Get-Command docker -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          Get-Command wsl -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      - name: Ensure Yarn Classic
+        shell: pwsh
+        run: |
+          if (-not (Get-Command yarn -ErrorAction SilentlyContinue)) {
+            npm install --global yarn@1.22.22
+          }
+          node --version
+          yarn --version
+
+      - name: Frozen dependency install
+        shell: pwsh
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        shell: pwsh
+        run: yarn lint
+
+      - name: Build Harvester extension package
+        shell: pwsh
+        run: |
+          $bash = (Get-Command bash -ErrorAction SilentlyContinue)
+          if (-not $bash) { throw 'Git Bash/bash is required by the Rancher build-pkg script on this runner.' }
+          bash -lc "yarn build-pkg harvester"
+
+      - name: Presentation-safety and brand-leak scan
+        shell: pwsh
+        run: |
+          Write-Host 'Changed files versus main:'
+          git diff --name-only origin/main...HEAD
+          Write-Host 'Potential visible upstream-brand references in presentation files:'
+          git grep -n -i -E 'Harvester|harvesterhci|SUSE|Rancher' -- 'pkg/harvester/*.vue' 'pkg/harvester/**/*.vue' 'pkg/harvester/l10n/*.yaml' 'pkg/harvester/package.json' 'pkg/harvester/icon.svg' | Select-Object -First 500
+          Write-Host 'Internal identifiers are expected and are not automatically failures.'
+
+      - name: Cluster tooling probe
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          if (Get-Command kubectl -ErrorAction SilentlyContinue) {
+            kubectl config current-context
+            kubectl get nodes -o wide
+          } else {
+            Write-Host 'kubectl not installed/configured on runner.'
+          }
