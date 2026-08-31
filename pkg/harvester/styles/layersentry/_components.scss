@@ -1,60 +1,45 @@
-.layersentry-dashboard {
-  .cluster-dashboard-glance {
-    align-items: center;
-    background: var(--ls-surface);
-    border: 1px solid var(--ls-border);
-    border-left: 4px solid var(--ls-brand-navy);
-    border-radius: var(--ls-radius-md);
-    box-shadow: var(--ls-shadow-soft);
-    gap: 28px;
-    margin: 8px 0 24px;
-    padding: 16px 20px;
+.cluster-dashboard-glance {
+  align-items: center;
+  background: var(--ls-surface);
+  border: 1px solid var(--ls-border) !important;
+  border-left: 4px solid var(--ls-brand-navy) !important;
+  border-radius: var(--ls-radius-md);
+  box-shadow: var(--ls-shadow-soft);
+  gap: 28px;
+  margin: 8px 0 24px;
+  padding: 16px 20px !important;
 
-    > * {
-      margin-right: 0;
-      min-width: 0;
-    }
-
-    label {
-      color: var(--ls-text-muted);
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-    }
-
-    span {
-      color: var(--ls-text);
-    }
+  > * {
+    margin-right: 0 !important;
+    min-width: 0;
   }
 
-  .resource-gauges,
-  .hardware-resource-gauges {
-    gap: 16px;
+  label {
+    color: var(--ls-text-muted);
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+    text-transform: uppercase;
   }
 
-  .resource-gauges > *,
-  .hardware-resource-gauges > * {
-    transition: border-color var(--ls-transition-fast), box-shadow var(--ls-transition-fast), transform var(--ls-transition-fast);
+  span {
+    color: var(--ls-text);
   }
+}
 
-  .resource-gauges > *:hover,
-  .hardware-resource-gauges > *:hover {
-    border-color: var(--ls-border-strong);
-    box-shadow: var(--ls-shadow-soft);
-  }
+.hardware-resource-gauges {
+  gap: 16px;
+}
 
-  h3 {
-    font-size: 18px;
-    font-weight: 650;
-    margin-bottom: 14px;
-  }
+.hardware-resource-gauges > * {
+  transition: border-color var(--ls-transition-fast), box-shadow var(--ls-transition-fast), transform var(--ls-transition-fast);
+}
 
-  .sortable-table {
-    border-radius: var(--ls-radius-md);
-  }
+.hardware-resource-gauges > *:hover {
+  border-color: var(--ls-border-strong);
+  box-shadow: var(--ls-shadow-soft);
 }
 
 .layersentry-branding {
@@ -76,11 +61,6 @@
 
   .layersentry-brand-section > h3:first-child {
     margin-top: 0 !important;
-  }
-
-  .logo-container :deep(.simple-box) {
-    border-color: var(--ls-border);
-    border-radius: var(--ls-radius-md);
   }
 }
 
@@ -110,7 +90,7 @@
 }
 
 @media (max-width: 1100px) {
-  .layersentry-dashboard .cluster-dashboard-glance {
+  .cluster-dashboard-glance {
     align-items: flex-start;
     flex-wrap: wrap;
   }
