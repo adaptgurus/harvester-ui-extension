@@ -3,7 +3,7 @@ import * as harvesterCluster from './harvester-cluster';
 
 const LAYERSENTRY_VENDOR = 'LayerSentry';
 const UPSTREAM_DEFAULT_VENDOR = 'Harvester';
-const LAYERSENTRY_LOGO = require('../assets/layersentry/layer-sentry-icon.svg');
+const LAYERSENTRY_LOGO = require('../assets/layersentry/layer-sentry-logo.svg');
 
 export function syncLayerSentrySingleProductBranding(store) {
   const current = store.getters['isSingleProduct'];
