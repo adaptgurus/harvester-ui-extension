@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - feat/layersentry-ui-rebrand
+  pull_request:
+    types: [edited, synchronize]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
