@@ -1,0 +1,193 @@
+name: LayerSentry v1.8.2 offline UI assets
+
+on:
+  push:
+    branches:
+      - release-layersentry-v1.8.2
+    paths:
+      - .github/workflows/layersentry-offline-ui-assets.yml
+      - package.json
+      - yarn.lock
+      - pkg/harvester/**
+      - scripts/build-embedded
+      - scripts/build-pkg.sh
+      - scripts/ci-build-pkg.sh
+      - scripts/version
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: layersentry-v1.8.2-offline-ui-assets
+  cancel-in-progress: true
+
+jobs:
+  build-offline-ui-assets:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    env:
+      CI_BUILD_TAG: v1.8.2
+      EXPECTED_UI_SOURCE_COMMIT: c22ca7d979675290977c6b1381ab368d72ceeb66
+    steps:
+      - name: Checkout exact LayerSentry UI source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: release-layersentry-v1.8.2
+          fetch-depth: 0
+
+      - name: Verify immutable source ancestry and release identity
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git merge-base --is-ancestor "$EXPECTED_UI_SOURCE_COMMIT" HEAD
+          node - <<'NODE'
+          const root = require('./package.json');
+          const pkg = require('./pkg/harvester/package.json');
+          if (root.version !== '1.8.2') throw new Error(`root version must be 1.8.2, got ${root.version}`);
+          if (pkg.version !== '1.8.2') throw new Error(`plugin version must be 1.8.2, got ${pkg.version}`);
+          if (pkg.rancher?.annotations?.['catalog.cattle.io/display-name'] !== 'LayerSentry') {
+            throw new Error('LayerSentry display-name annotation missing');
+          }
+          NODE
+          test -s pkg/harvester/icon.svg
+          test -s pkg/harvester/config/layersentry-cluster.js
+          test -s pkg/harvester/l10n/layersentry-en-us.yaml
+          test -s pkg/harvester/styles/layersentry/index.scss
+          grep -F 'LayerSentry' pkg/harvester/l10n/layersentry-en-us.yaml
+          git rev-parse HEAD
+
+      - name: Setup Node 24 and Yarn Classic
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - name: Install exact dependencies
+        shell: bash
+        run: |
+          set -euxo pipefail
+          npm install --global yarn@1.22.22
+          yarn install --frozen-lockfile
+          node --version
+          yarn --version
+
+      - name: Lint exact release source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          yarn lint
+
+      - name: Build embedded LayerSentry dashboard tarball
+        id: embedded
+        shell: bash
+        run: |
+          set -euxo pipefail
+          CI_BUILD_TAG=v1.8.2 ./scripts/build-embedded
+          test -s dist/v1.8.2.tar.gz
+          mkdir -p ui-build-inspection/dashboard
+          tar -xzf dist/v1.8.2.tar.gz -C ui-build-inspection/dashboard
+          find ui-build-inspection/dashboard -type f -printf '%p\t%s bytes\n' | sort > ui-build-inspection/dashboard-files.txt
+          test "$(find ui-build-inspection/dashboard -type f | wc -l)" -gt 10
+          grep -R -a -F -m 1 'LayerSentry' ui-build-inspection/dashboard
+
+      - name: Build embedded LayerSentry Harvester plugin tarball
+        id: plugin
+        shell: bash
+        run: |
+          set -euxo pipefail
+          CI_BUILD_TAG=v1.8.2 ./scripts/ci-build-pkg.sh harvester
+          test -s dist-pkg/harvester-v1.8.2.tar.gz
+          mkdir -p ui-build-inspection/plugin
+          tar -xzf dist-pkg/harvester-v1.8.2.tar.gz -C ui-build-inspection/plugin
+          find ui-build-inspection/plugin -type f -printf '%p\t%s bytes\n' | sort > ui-build-inspection/plugin-files.txt
+          test "$(find ui-build-inspection/plugin -type f | wc -l)" -gt 1
+          grep -R -a -F -m 1 'LayerSentry' ui-build-inspection/plugin
+
+      - name: Prepare immutable offline UI evidence
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p layersentry-offline-ui-assets
+          cp dist/v1.8.2.tar.gz layersentry-offline-ui-assets/
+          cp dist-pkg/harvester-v1.8.2.tar.gz layersentry-offline-ui-assets/
+          cp ui-build-inspection/dashboard-files.txt layersentry-offline-ui-assets/
+          cp ui-build-inspection/plugin-files.txt layersentry-offline-ui-assets/
+
+          dashboard_sha512=$(sha512sum layersentry-offline-ui-assets/v1.8.2.tar.gz | awk '{print $1}')
+          dashboard_bytes=$(stat -c '%s' layersentry-offline-ui-assets/v1.8.2.tar.gz)
+          plugin_sha512=$(sha512sum layersentry-offline-ui-assets/harvester-v1.8.2.tar.gz | awk '{print $1}')
+          plugin_bytes=$(stat -c '%s' layersentry-offline-ui-assets/harvester-v1.8.2.tar.gz)
+          source_commit=$(git rev-parse HEAD)
+
+          sha512sum \
+            layersentry-offline-ui-assets/v1.8.2.tar.gz \
+            layersentry-offline-ui-assets/harvester-v1.8.2.tar.gz \
+            > layersentry-offline-ui-assets/SHA512SUMS
+
+          cat > layersentry-offline-ui-assets/manifest.yaml <<EOF
+          apiVersion: release.layersentry.io/v1
+          kind: OfflineUIAssetBundle
+          metadata:
+            product: LayerSentry
+            version: "1.8.2"
+            generatedAtUtc: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          source:
+            repository: adaptgurus/harvester-ui-extension
+            branch: release-layersentry-v1.8.2
+            commit: ${source_commit}
+            requiredAncestor: ${EXPECTED_UI_SOURCE_COMMIT}
+          dashboard:
+            filename: v1.8.2.tar.gz
+            bytes: ${dashboard_bytes}
+            sha512: ${dashboard_sha512}
+            intendedHarvesterDockerfileLocation: /usr/share/harvester/harvester
+          plugin:
+            filename: harvester-v1.8.2.tar.gz
+            bytes: ${plugin_bytes}
+            sha512: ${plugin_sha512}
+            intendedHarvesterDockerfileLocation: /usr/share/harvester/harvester/v1/harvester/plugin-assets
+          qualification:
+            sourceIdentity: PASS
+            lint: PASS
+            build: PASS
+            LayerSentryMarkerInDashboardOutput: PASS
+            LayerSentryMarkerInPluginOutput: PASS
+            embeddedInHarvesterImage: false
+            embeddedInLayerSentryIso: false
+          EOF
+
+          cat > layersentry-offline-ui-assets/README.md <<EOF
+          # LayerSentry v1.8.2 offline UI assets
+
+          Source commit: \`${source_commit}\`
+
+          - \`v1.8.2.tar.gz\`: embedded standalone dashboard payload expected by the Harvester v1.8.2 image build.
+          - \`harvester-v1.8.2.tar.gz\`: embedded Harvester plugin payload expected by the Harvester v1.8.2 image build.
+
+          These assets are build-qualified only. They are not yet proven inside a Harvester image or LayerSentry ISO.
+          EOF
+
+          cat layersentry-offline-ui-assets/manifest.yaml
+          cat layersentry-offline-ui-assets/SHA512SUMS
+          find layersentry-offline-ui-assets -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort
+
+          {
+            echo '# LayerSentry offline UI asset build'
+            echo
+            echo "- Source commit: \`${source_commit}\`"
+            echo "- Dashboard bytes: \`${dashboard_bytes}\`"
+            echo "- Dashboard SHA-512: \`${dashboard_sha512}\`"
+            echo "- Plugin bytes: \`${plugin_bytes}\`"
+            echo "- Plugin SHA-512: \`${plugin_sha512}\`"
+            echo '- Harvester image/ISO integration remains pending'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable offline UI asset bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: layersentry-v1.8.2-offline-ui-assets
+          path: layersentry-offline-ui-assets/
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0
