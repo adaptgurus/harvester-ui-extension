@@ -316,6 +316,10 @@ export default {
       return out;
     },
 
+    dashboardClusterName() {
+      return this.currentCluster?.nameDisplay || this.currentCluster?.displayName || this.currentCluster?.id || this.t('generic.loading');
+    },
+
     currentVersion() {
       const inStore = this.$store.getters['currentProduct'].inStore;
       const setting = this.$store.getters[`${ inStore }/byId`](HCI.SETTING, 'server-version');
@@ -596,35 +600,54 @@ export default {
 
 <template>
   <Loading v-if="$fetchState.pending || !currentCluster" />
-  <section v-else>
+  <section
+    v-else
+    class="layersentry-dashboard"
+    aria-labelledby="layersentry-dashboard-heading"
+  >
     <HarvesterUpgrade />
 
-    <div
+    <header class="layersentry-dashboard-header">
+      <div>
+        <p class="layersentry-eyebrow">
+          {{ t('harvester.dashboard.operationalOverview') }}
+        </p>
+        <h1 id="layersentry-dashboard-heading">
+          {{ t('harvester.dashboard.header', { cluster: dashboardClusterName }) }}
+        </h1>
+        <p class="layersentry-dashboard-description">
+          {{ t('harvester.dashboard.description') }}
+        </p>
+      </div>
+    </header>
+
+    <dl
       class="cluster-dashboard-glance"
+      :aria-label="t('harvester.dashboard.glanceLabel')"
     >
       <div>
-        <label>
-          {{ t('harvester.dashboard.version') }}:
-        </label>
-        <span>
+        <dt>
+          {{ t('harvester.dashboard.version') }}
+        </dt>
+        <dd>
           <span v-clean-tooltip="{content: currentVersion}">
             {{ currentVersion }}
           </span>
-        </span>
+        </dd>
       </div>
       <div>
-        <label>
-          {{ t('glance.created') }}:
-        </label>
-        <span>
+        <dt>
+          {{ t('glance.created') }}
+        </dt>
+        <dd>
           <LiveDate
             :value="firstNodeCreationTimestamp"
             :add-suffix="true"
             :show-tooltip="true"
           />
-        </span>
+        </dd>
       </div>
-    </div>
+    </dl>
 
     <div v-if="!enabledMonitoringAddon && canEnableMonitoringAddon">
       <Banner color="info">
@@ -639,17 +662,17 @@ export default {
 
     <div class="resource-gauges">
       <ResourceSummary
-        v-for="(resource, i) in totalCountGaugeInput"
-        :key="i"
+        v-for="resource in totalCountGaugeInput"
+        :key="resource.resource"
         :spoofed-counts="resource.isSpoofed ? resource : null"
         :resource="resource.resource"
       />
     </div>
 
     <template v-if="nodes.length && hasMetricNodeSchema">
-      <h3 class="mt-40">
+      <h2 class="mt-40 section-heading">
         {{ t('clusterIndexPage.sections.capacity.label') }}
-      </h3>
+      </h2>
       <div
         class="hardware-resource-gauges"
         :class="{
@@ -713,13 +736,13 @@ export default {
     </Tabbed>
 
     <div class="mb-40 mt-40">
-      <h3>
+      <h2 class="section-heading">
         {{ t('clusterIndexPage.sections.events.label') }}
-      </h3>
+      </h2>
       <Tabbed class="mt-20">
         <Tab
           name="host"
-          label="Hosts"
+          :label="t('harvester.dashboard.events.hosts')"
           :weight="98"
         >
           <SortableTable
@@ -745,7 +768,7 @@ export default {
         </Tab>
         <Tab
           name="vm"
-          label="VMs"
+          :label="t('harvester.dashboard.events.virtualMachines')"
           :weight="99"
         >
           <SortableTable
@@ -771,7 +794,7 @@ export default {
         </Tab>
         <Tab
           name="volume"
-          label="Volumes"
+          :label="t('harvester.dashboard.events.volumes')"
           :weight="97"
         >
           <SortableTable
@@ -797,7 +820,7 @@ export default {
         </Tab>
         <Tab
           name="image"
-          label="Images"
+          :label="t('harvester.dashboard.events.images')"
           :weight="96"
         >
           <SortableTable
@@ -827,22 +850,29 @@ export default {
 </template>
 
 <style lang="scss" scoped>
-  .cluster-dashboard-glance {
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: 20px 0px;
-    display: flex;
+.layersentry-dashboard {
+  min-width: 0;
+}
 
-    &>*{
-      margin-right: 40px;
+.cluster-dashboard-glance {
+  display: flex;
 
-      & SPAN {
-        font-weight: bold
-      }
-    }
+  > div {
+    min-width: 0;
   }
 
-  .events {
-    margin-top: 30px;
+  dd {
+    font-weight: 700;
+    margin: 0;
   }
+}
+
+.section-heading {
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.events {
+  margin-top: 30px;
+}
 </style>

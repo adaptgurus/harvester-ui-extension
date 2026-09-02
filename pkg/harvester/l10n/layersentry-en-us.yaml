@@ -18,6 +18,14 @@ harvester:
   dashboard:
     header: 'LayerSentry Cluster: {cluster}'
     version: Platform version
+    operationalOverview: Operational overview
+    description: Real-time capacity, workload, network, storage, monitoring, and recent-event status for this cluster.
+    glanceLabel: LayerSentry cluster release and creation details
+    events:
+      hosts: Hosts
+      virtualMachines: Virtual machines
+      volumes: Volumes
+      images: Images
   virtualMachine:
     filesystem:
       description: LayerSentry supports filesystem volumes for virtual machines through virtiofs.
@@ -28,6 +36,11 @@ harvester:
       warning: 'WARNING: <br/> If you configure "http-proxy" and "https-proxy", you must also put the LayerSentry node&apos;s CIDR into "no-proxy"; otherwise cluster networking can be disrupted.'
     harvesterMonitoring:
       label: LayerSentry Monitoring
+  upgradePage:
+    layersentryHeader:
+      openStatus: Open LayerSentry upgrade status
+      targetRelease: Target release
+      managementVersion: Management plane
   upgrade:
     releaseTip: Review the validated release notes, compatibility matrix, backup status, and change-management instructions supplied for this LayerSentry build before continuing.
     checkReady: I have read and understood the upgrade instructions related to this LayerSentry deployment.

@@ -1,3 +1,4 @@
+.layersentry-dashboard,
 .cluster-dashboard-glance,
 .hardware-resource-gauges,
 .layersentry-branding,
@@ -5,6 +6,9 @@
   color: var(--ls-text);
 }
 
+.layersentry-dashboard h1,
+.layersentry-dashboard h2,
+.layersentry-dashboard h3,
 .layersentry-branding h1,
 .layersentry-branding h2,
 .layersentry-branding h3,
@@ -15,11 +19,13 @@
   letter-spacing: -0.01em;
 }
 
+.layersentry-dashboard a,
 .layersentry-branding a,
 .layersentry-support a {
   transition: color var(--ls-transition-fast), text-decoration-color var(--ls-transition-fast);
 }
 
+.layersentry-dashboard :focus-visible,
 .cluster-dashboard-glance :focus-visible,
 .hardware-resource-gauges :focus-visible,
 .layersentry-branding :focus-visible,
@@ -29,11 +35,28 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .layersentry-dashboard *,
   .cluster-dashboard-glance *,
   .hardware-resource-gauges *,
   .layersentry-branding *,
   .layersentry-support * {
     scroll-behavior: auto;
     transition-duration: 0.01ms;
+  }
+}
+
+@media (forced-colors: active) {
+  .cluster-dashboard-glance,
+  .resource-gauges > *,
+  .hardware-resource-gauges > *,
+  .layersentry-branding .layersentry-brand-section,
+  .layersentry-support .box {
+    border: 1px solid CanvasText;
+    box-shadow: none;
+    forced-color-adjust: auto;
+  }
+
+  .cluster-dashboard-glance {
+    border-left-width: 4px;
   }
 }

@@ -125,9 +125,6 @@ export default {
       return this.latestResource.repoInfo;
     },
 
-    releaseLink() {
-      return `https://github.com/harvester/harvester/releases/tag/${ this.latestResource?.spec?.version }`;
-    },
 
     upgradeVersion() {
       return this.latestResource?.spec?.version;
@@ -194,21 +191,33 @@ export default {
       class="hand"
     >
       <slot name="button-content">
-        <i class="warning icon-fw icon icon-dot-open dot-icon" />
+        <button
+          type="button"
+          class="upgrade-trigger"
+          :aria-label="t('harvester.upgradePage.layersentryHeader.openStatus')"
+        >
+          <i
+            aria-hidden="true"
+            class="warning icon-fw icon icon-dot-open dot-icon"
+          />
+        </button>
       </slot>
 
       <template #popper>
-        <div class="upgrade-info mb-10">
+        <div
+          class="upgrade-info mb-10"
+          aria-live="polite"
+        >
           <div
             v-if="repoInfo"
             class="repoInfo"
           >
             <div class="row">
               <div class="col span-12">
-                <a
-                  :href="releaseLink"
-                  target="_blank"
-                >{{ upgradeVersion }}</a>
+                <p class="release-version">
+                  <span>{{ t('harvester.upgradePage.layersentryHeader.targetRelease') }}</span>
+                  <strong>{{ upgradeVersion }}</strong>
+                </p>
               </div>
             </div>
             <div
@@ -264,7 +273,7 @@ export default {
               </div>
 
               <div class="col span-6">
-                {{ t('product.rancher') }}: <span class="text-muted">{{ repoInfo.release.rancher }}</span>
+                {{ t('harvester.upgradePage.layersentryHeader.managementVersion') }}: <span class="text-muted">{{ repoInfo.release.rancher }}</span>
               </div>
             </div>
 
@@ -346,10 +355,16 @@ export default {
 </style>
 
 <style lang="scss" scoped>
-a {
-  float: right;
-  color: var(--link) !important;
-  text-decoration: none;
+.release-version {
+  align-items: baseline;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin: 0 0 12px;
+
+  span {
+    color: var(--ls-text-muted);
+  }
 }
 
 .upgrade {
@@ -358,10 +373,30 @@ a {
   display: flex;
   align-items: center;
 
+  .upgrade-trigger {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: var(--ls-radius-sm);
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    height: 40px;
+    justify-content: center;
+    padding: 0;
+    width: 40px;
+  }
+
+  .upgrade-trigger:focus-visible {
+    outline: 2px solid var(--ls-focus);
+    outline-offset: 2px;
+  }
+
   .dot-icon {
+    color: var(--ls-status-warning);
     font-size: 24px;
+    pointer-events: none;
     vertical-align: middle;
-    color: #00a483;
   }
 }
 
@@ -398,5 +433,13 @@ a {
 .footer {
   display: flex;
   justify-content: flex-end;
+}
+</style>
+
+<style lang="scss">
+@media (max-width: 700px) {
+  .upgrade-header-dropdown .upgrade-info {
+    min-width: min(550px, calc(100vw - 32px));
+  }
 }
 </style>
