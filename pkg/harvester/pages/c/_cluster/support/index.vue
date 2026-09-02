@@ -92,7 +92,7 @@ export default {
 </script>
 
 <template>
-  <div>
+  <div class="layersentry-support">
     <BannerGraphic :title="t(title, {}, true)" />
 
     <IndentedPanel>

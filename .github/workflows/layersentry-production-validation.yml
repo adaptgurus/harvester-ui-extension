@@ -4,18 +4,23 @@ on:
   push:
     branches:
       - release-layersentry-v1.8.2
+      - fix/layersentry-v1.8.2-brand-completion
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches:
+      - release-layersentry-v1.8.2
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: layersentry-1.8.2-production-validation
+  group: layersentry-1.8.2-production-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   production-gate:
-    name: Stable build and release safety
+    name: Stable build and complete brand contract
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
@@ -46,8 +51,12 @@ jobs:
           if (/-dev|-rc|-alpha|-beta/i.test(root.version) || /-dev|-rc|-alpha|-beta/i.test(pkg.version)) {
             throw new Error('prerelease/dev version detected');
           }
+          if (pkg.name !== 'harvester') throw new Error('technical package identity must remain harvester');
           if (pkg.rancher?.annotations?.['catalog.cattle.io/display-name'] !== 'LayerSentry') {
             throw new Error('LayerSentry catalog display name missing');
+          }
+          if (pkg.icon !== 'https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/release-layersentry-v1.8.2/pkg/harvester/icon.svg') {
+            throw new Error(`unexpected stable icon URL: ${pkg.icon}`);
           }
           console.log(`Stable release identity: root=${root.version}, package=${pkg.version}`);
           NODE
@@ -61,22 +70,50 @@ jobs:
       - name: Build stable LayerSentry extension
         run: yarn build-pkg harvester
 
-      - name: Validate production output and private-label contract
+      - name: Validate complete LayerSentry presentation contract
         run: |
           set -euo pipefail
+          test -s pkg/harvester/assets/layersentry/layer-sentry-icon.svg
+          test -s pkg/harvester/assets/layersentry/layer-sentry-logo.svg
           test -s pkg/harvester/icon.svg
           test -s pkg/harvester/config/layersentry-cluster.js
           test -s pkg/harvester/l10n/layersentry-en-us.yaml
+          test -s pkg/harvester/styles/layersentry/_tokens.scss
+          test -s pkg/harvester/styles/layersentry/_theme.scss
+          test -s pkg/harvester/styles/layersentry/_components.scss
           test -s pkg/harvester/styles/layersentry/index.scss
-          grep -q "PRODUCT_NAME = 'harvester'" pkg/harvester/config/harvester.ts
-          grep -q 'LayerSentry' pkg/harvester/l10n/layersentry-en-us.yaml
-          grep -q 'LayerSentry' pkg/harvester/package.json
+
+          grep -Fq "PRODUCT_NAME = 'harvester'" pkg/harvester/config/harvester.ts
+          grep -Fq 'layer-sentry-icon.svg' pkg/harvester/config/harvester.ts
+          grep -Fq 'layer-sentry-logo.svg' pkg/harvester/config/layersentry-cluster.js
+          grep -Fq 'supportCustomLogo: true' pkg/harvester/config/layersentry-cluster.js
+          grep -Fq 'mergeWithReplace' pkg/harvester/index.ts
+          grep -Fq "plugin.register('l10n', 'en-us', mergedEnUs)" pkg/harvester/index.ts
+          grep -Fq 'syncLayerSentrySingleProductBranding(this.$store)' pkg/harvester/pages/c/_cluster/brand/index.vue
+          grep -Fq 'class="layersentry-branding"' pkg/harvester/pages/c/_cluster/brand/index.vue
+          grep -Fq 'class="layersentry-support"' pkg/harvester/pages/c/_cluster/support/index.vue
+          grep -Fq 'LayerSentry Cluster:' pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -Fq 'LayerSentry Monitoring' pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -Fq 'LayerSentry Support' pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -Fq "'harv-auto-disk-provision-paths': Specify disks" pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -Fq -- '--ls-brand-navy: #000f42' pkg/harvester/styles/layersentry/_tokens.scss
+
+          if grep -Fq "plugin.register('l10n', 'en-us', () => layersentryEnUs)" pkg/harvester/index.ts; then
+            echo 'The narrow LayerSentry overlay must not replace the complete base locale.' >&2
+            exit 1
+          fi
+          if grep -Fq -- '--ls-brand-cyan' pkg/harvester/styles/layersentry/_tokens.scss || grep -Fq -- '--ls-brand-mint' pkg/harvester/styles/layersentry/_tokens.scss; then
+            echo 'Unapproved secondary brand colors are present.' >&2
+            exit 1
+          fi
+
           test -d dist-pkg
           count=$(find dist-pkg -type f | wc -l)
           bytes=$(du -sb dist-pkg | awk '{print $1}')
           echo "Generated files=$count bytes=$bytes"
           test "$count" -gt 1
           test "$bytes" -gt 1000000
+          grep -R -a -F -m 1 'LayerSentry' dist-pkg
 
       - name: Production dependency audit
         id: audit

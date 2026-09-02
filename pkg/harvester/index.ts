@@ -1,12 +1,12 @@
 //@ts-nocheck
 import { importTypes } from '@rancher/auto-import';
 import { IPlugin } from '@shell/core/types';
+import { mergeWithReplace } from '@shell/utils/object';
 import extensionRoutes from './routing/harvester-routing';
 import harvesterCommonStore from './store/harvester-common';
 import harvesterStore from './store/harvester-store';
 import customValidators from './validators';
 import { PRODUCT_NAME } from './config/harvester';
-import layersentryEnUs from './l10n/layersentry-en-us.yaml';
 import { defineAsyncComponent } from 'vue';
 import './styles/vue-flow.scss';
 import './styles/layersentry/index.scss';
@@ -19,14 +19,18 @@ export default function (plugin: IPlugin) {
   // Auto-import model, detail, edit from the folders
   importTypes(plugin);
 
-  // Apply the LayerSentry presentation overlay after the upstream locale.
-  // Internal harvester.* keys remain unchanged for API and route compatibility.
-  plugin.register('l10n', 'en-us', () => layersentryEnUs);
+  // Merge the LayerSentry presentation copy into Harvester's complete locale.
+  // Translation keys remain harvester.* to preserve compatibility.
+  const baseEnUs = require('./l10n/en-us.yaml');
+  const layersentryEnUs = require('./l10n/layersentry-en-us.yaml');
+  const mergedEnUs = mergeWithReplace(baseEnUs, layersentryEnUs, { mutateOriginal: false });
+
+  plugin.register('l10n', 'en-us', mergedEnUs);
 
   // Provide plugin metadata from package.json
   plugin.metadata = require('./package.json');
 
-  // Built-in private-label icon
+  // Built-in icon
   plugin.metadata.icon = require('./icon.svg');
 
   plugin.addProduct(require('./config/layersentry-cluster'));

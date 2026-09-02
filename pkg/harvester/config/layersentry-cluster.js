@@ -1,17 +1,9 @@
-import { MANAGEMENT } from '@shell/config/types';
-import { SETTING } from '@shell/config/settings';
 import { getVendor, setVendor } from '@shell/config/private-label';
 import * as harvesterCluster from './harvester-cluster';
 
 const LAYERSENTRY_VENDOR = 'LayerSentry';
 const UPSTREAM_DEFAULT_VENDOR = 'Harvester';
-const LAYERSENTRY_LOGO = require('../icon.svg');
-
-function hasConfiguredLogo(store) {
-  const settings = store.getters['management/all']?.(MANAGEMENT.SETTING) || [];
-
-  return settings.some((setting) => [SETTING.LOGO_DARK, SETTING.LOGO_LIGHT].includes(setting.id) && !!setting.value);
-}
+const LAYERSENTRY_LOGO = require('../assets/layersentry/layer-sentry-logo.svg');
 
 export function syncLayerSentrySingleProductBranding(store) {
   const current = store.getters['isSingleProduct'];
@@ -20,20 +12,16 @@ export function syncLayerSentrySingleProductBranding(store) {
     return;
   }
 
-  let vendor = getVendor();
+  const vendor = getVendor();
 
   if (!vendor || vendor === UPSTREAM_DEFAULT_VENDOR) {
     setVendor(LAYERSENTRY_VENDOR);
-    vendor = LAYERSENTRY_VENDOR;
   }
-
-  const hasCustomVendor = vendor !== LAYERSENTRY_VENDOR;
-  const supportCustomLogo = hasConfiguredLogo(store) || hasCustomVendor;
 
   store.dispatch('setIsSingleProduct', {
     ...current,
-    logo: LAYERSENTRY_LOGO,
-    supportCustomLogo
+    logo:              LAYERSENTRY_LOGO,
+    supportCustomLogo: true,
   });
 }
 

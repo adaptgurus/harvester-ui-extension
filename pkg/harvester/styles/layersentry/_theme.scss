@@ -1,0 +1,39 @@
+.cluster-dashboard-glance,
+.hardware-resource-gauges,
+.layersentry-branding,
+.layersentry-support {
+  color: var(--ls-text);
+}
+
+.layersentry-branding h1,
+.layersentry-branding h2,
+.layersentry-branding h3,
+.layersentry-support h1,
+.layersentry-support h2,
+.layersentry-support h3 {
+  color: var(--ls-text);
+  letter-spacing: -0.01em;
+}
+
+.layersentry-branding a,
+.layersentry-support a {
+  transition: color var(--ls-transition-fast), text-decoration-color var(--ls-transition-fast);
+}
+
+.cluster-dashboard-glance :focus-visible,
+.hardware-resource-gauges :focus-visible,
+.layersentry-branding :focus-visible,
+.layersentry-support :focus-visible {
+  outline: 2px solid var(--ls-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cluster-dashboard-glance *,
+  .hardware-resource-gauges *,
+  .layersentry-branding *,
+  .layersentry-support * {
+    scroll-behavior: auto;
+    transition-duration: 0.01ms;
+  }
+}

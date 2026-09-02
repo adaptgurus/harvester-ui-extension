@@ -15,6 +15,7 @@ import { fetchOrCreateSetting } from '@shell/utils/settings';
 import { SETTING } from '@shell/config/settings';
 import { _EDIT, _VIEW } from '@shell/config/query-params';
 import { setFavIcon } from '@shell/utils/favicon';
+import { syncLayerSentrySingleProductBranding } from '../../../../config/layersentry-cluster';
 const Color = require('color');
 
 export default {
@@ -149,6 +150,7 @@ export default {
           setVendor(this.uiPLSetting.value);
         }
         setFavIcon(this.$store);
+        syncLayerSentrySingleProductBranding(this.$store);
         btnCB(true);
       } catch (err) {
         this.errors.push(err);
@@ -160,12 +162,17 @@ export default {
 </script>
 <template>
   <Loading v-if="$fetchState.pending" />
-  <div v-else>
-    <h1 class="mb-20">
-      {{ t('branding.label') }}
-    </h1>
-    <TypeDescription resource="harvester" />
-    <div>
+  <div
+    v-else
+    class="layersentry-branding"
+  >
+    <div class="layersentry-page-intro">
+      <h1 class="mb-20">
+        {{ t('branding.label') }}
+      </h1>
+      <TypeDescription resource="harvester" />
+    </div>
+    <div class="layersentry-brand-section">
       <div class="row mb-20">
         <div class="col span-6">
           <LabeledInput
@@ -207,7 +214,7 @@ export default {
           </div>
           <SimpleBox
             v-if="uiLogoLight || uiLogoDark"
-            class="theme-light  mb-10"
+            class="theme-light mb-10"
           >
             <label class="text-muted">{{ t('branding.logos.lightPreview') }}</label>
             <img
@@ -230,7 +237,7 @@ export default {
           </div>
           <SimpleBox
             v-if="uiLogoDark || uiLogoLight"
-            class="theme-dark  mb-10"
+            class="theme-dark mb-10"
           >
             <label class="text-muted">{{ t('branding.logos.darkPreview') }}</label>
             <img
@@ -349,33 +356,33 @@ export default {
   </div>
 </template>
 
-  <style scoped lang='scss'>
-  .link-example {
-    display: flex;
-    align-content: center;
-    a {
-      margin: auto;
+<style scoped lang="scss">
+.link-example {
+  display: flex;
+  align-content: center;
+  a {
+    margin: auto;
+  }
+}
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  :deep().simple-box {
+    position: relative;
+    flex: 1;
+    max-height: 120px;
+    .content {
+      height: 100%;
+      display: flex;
+    }
+    .logo-preview {
+      max-width: 100%;
     }
   }
-  .logo-container {
-      display: flex;
-      flex-direction: column;
-      :deep().simple-box {
-          position: relative;
-          flex: 1;
-          max-height: 120px;
-          .content {
-            height: 100%;
-            display: flex;
-          }
-          .logo-preview {
-            max-width: 100%;
-          }
-      }
-      & LABEL {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-      }
+  & LABEL {
+    position: absolute;
+    top: 10px;
+    left: 10px;
   }
-  </style>
+}
+</style>

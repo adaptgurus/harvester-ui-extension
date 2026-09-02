@@ -48,6 +48,30 @@ harvester:
     community:
       learnMore: Upstream Harvester support information
       pricing: Upstream support options
+  addons:
+    descriptions:
+      'harvester-system/vm-import-controller': vm-import-controller helps migrate virtual machine workloads from source environments to an existing LayerSentry cluster.
+      'harvester-system/pcidevices-controller': pcidevices-controller discovers PCI devices on LayerSentry nodes and prepares devices for PCI passthrough to virtual machines and guest clusters.
+      'cattle-logging-system/rancher-logging': rancher-logging collects logs, events, and audits from the LayerSentry cluster and routes them to configured destinations.
+      'cattle-monitoring-system/rancher-monitoring': rancher-monitoring collects LayerSentry cluster and virtual machine metrics for embedded dashboards and remote alerts.
+      'vm-import-controller': vm-import-controller helps migrate virtual machine workloads from source environments to an existing LayerSentry cluster.
+      'pcidevices-controller': pcidevices-controller discovers PCI devices on LayerSentry nodes and prepares devices for PCI passthrough to virtual machines and guest clusters.
+      'nvidia-driver-toolkit': nvidia-driver-toolkit enables vGPU devices for LayerSentry virtual machines.
+      'rancher-logging': rancher-logging collects logs, events, and audits from the LayerSentry cluster and routes them to configured destinations.
+      'rancher-monitoring': rancher-monitoring collects LayerSentry cluster and virtual machine metrics for embedded dashboards and remote alerts.
+    vmImport:
+      provider:
+        requirementsText: To migrate virtual machines from VMware, use a vCenter Server 6.5 or later with an account that has at least read permissions. The source environment must be network-accessible from the LayerSentry node.
+      dashboard:
+        description: Migrate virtual machines from VMware vSphere to LayerSentry using cold migration for data consistency. Create a migration plan to select VMs, map networks and storage, and prepare the migration.
+      configureMappings:
+        description: Map VMware networks and datastores to LayerSentry target resources
+        networkMapping:
+          description: Map VMware port groups to LayerSentry networks
+          placeholder: Choose a LayerSentry network
+        storageMapping:
+          description: Map VMware datastores to LayerSentry storage classes
+          placeholder: Choose a LayerSentry Storage Class
   pci:
     noPermission: Please contact your system administrator to add LayerSentry add-ons first.
   vgpu:
