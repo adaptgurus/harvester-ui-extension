@@ -54,6 +54,7 @@
     "serve-pkgs": "./node_modules/@rancher/shell/scripts/serve-pkgs",
     "publish-pkgs": "./node_modules/@rancher/shell/scripts/extension/publish",
     "parse-tag-name": "./node_modules/@rancher/shell/scripts/extension/parse-tag-name",
+    "validate:layersentry": "node scripts/validate-layersentry-branding.mjs --source-only",
     "commitlint": "commitlint --edit",
     "prepare": "husky",
     "agents:generate": "./scripts/generate-agent-and-persona-mds.sh"

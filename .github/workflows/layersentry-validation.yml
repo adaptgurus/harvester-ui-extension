@@ -1,9 +1,11 @@
-name: LayerSentry Validation
+name: LayerSentry UI Production Validation
 
 on:
   push:
     branches:
-      - feat/layersentry-ui-rebrand
+      - main
+      - release-layersentry-v1.8.2
+      - 'feat/layersentry-*'
   pull_request:
     types: [opened, edited, synchronize, reopened]
     branches:
@@ -14,33 +16,42 @@ permissions:
   contents: read
 
 concurrency:
-  group: layersentry-validation-${{ github.ref }}
+  group: layersentry-ui-production-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+
 jobs:
-  validate:
-    name: Lint build and brand safety
+  quality-and-package:
+    name: Source contract, lint, package, and artifact
     runs-on: ubuntu-22.04
     timeout-minutes: 45
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - name: Checkout exact source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 1
+          persist-credentials: false
 
-      - name: Setup Node 24
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: yarn
 
-      - name: Ensure Yarn Classic
+      - name: Install Yarn Classic
         run: |
           npm install --global yarn@1.22.22
           node --version
           yarn --version
 
-      - name: Frozen dependency install
-        run: yarn install --frozen-lockfile
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      - name: Validate LayerSentry source contract
+        run: yarn validate:layersentry
 
       - name: Lint
         run: yarn lint
@@ -48,52 +59,121 @@ jobs:
       - name: Build LayerSentry extension package
         run: yarn build-pkg harvester
 
-      - name: Validate generated package
+      - name: Locate generated package
+        id: package
+        shell: bash
         run: |
           set -euo pipefail
-          out='dist-pkg/harvester-1.10.0-dev'
-          entry="$out/harvester-1.10.0-dev.umd.min.js"
-          test -d "$out"
-          test -s "$entry"
-          count=$(find "$out" -type f | wc -l)
-          bytes=$(stat -c '%s' "$entry")
-          echo "Generated files: $count"
-          echo "UMD entrypoint bytes: $bytes"
-          test "$count" -gt 1
-          test "$bytes" -gt 1000000
+          mapfile -t directories < <(
+            find dist-pkg -mindepth 1 -maxdepth 1 -type d -name 'harvester-*' -print | sort
+          )
+          if [ "${#directories[@]}" -ne 1 ]; then
+            printf 'Expected exactly one generated package directory; found %s\n' "${#directories[@]}"
+            printf '%s\n' "${directories[@]}"
+            exit 1
+          fi
 
-      - name: Validate LayerSentry presentation contract
+          bundle_dir="${directories[0]}"
+          mapfile -t bundles < <(
+            find "$bundle_dir" -maxdepth 1 -type f -name '*.umd.min.js' -print | sort
+          )
+          if [ "${#bundles[@]}" -ne 1 ]; then
+            printf 'Expected exactly one generated UMD bundle; found %s\n' "${#bundles[@]}"
+            printf '%s\n' "${bundles[@]}"
+            exit 1
+          fi
+
+          echo "bundle_dir=$bundle_dir" >> "$GITHUB_OUTPUT"
+          echo "bundle=${bundles[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate generated package and create manifest
+        run: node scripts/validate-layersentry-branding.mjs --dist "${{ steps.package.outputs.bundle_dir }}"
+
+      - name: Create package checksums
+        shell: bash
         run: |
           set -euo pipefail
-          test -s pkg/harvester/assets/layersentry/layer-sentry-icon.svg
-          test -s pkg/harvester/assets/layersentry/layer-sentry-logo.svg
-          test -s pkg/harvester/config/layersentry-cluster.js
-          test -s pkg/harvester/l10n/layersentry-en-us.yaml
-          test -s pkg/harvester/styles/layersentry/index.scss
+          find dist-pkg -type f ! -name SHA256SUMS -print0 |
+            sort -z |
+            xargs -0 sha256sum > dist-pkg/SHA256SUMS
+          test -s dist-pkg/SHA256SUMS
+          grep -F '"product": "LayerSentry"' dist-pkg/layersentry-branding-manifest.json
+          cat dist-pkg/layersentry-branding-manifest.json
+          echo 'LAYERSENTRY UI PACKAGE CHECKSUMS: PASS'
 
-          grep -q "PRODUCT_NAME = 'harvester'" pkg/harvester/config/harvester.ts
-          grep -q 'layer-sentry-icon.svg' pkg/harvester/config/harvester.ts
-          grep -q 'LayerSentry enterprise HCI' pkg/harvester/package.json
-          grep -q 'catalog.cattle.io/display-name.*LayerSentry' pkg/harvester/package.json
-          grep -q 'main/pkg/harvester/icon.svg' pkg/harvester/package.json
-          grep -q 'mergeWithReplace' pkg/harvester/index.ts
-          grep -q 'supportCustomLogo: true' pkg/harvester/config/layersentry-cluster.js
-          grep -q 'LayerSentry Cluster:' pkg/harvester/l10n/layersentry-en-us.yaml
-          grep -q 'LayerSentry Monitoring' pkg/harvester/l10n/layersentry-en-us.yaml
-          grep -q 'LayerSentry Support' pkg/harvester/l10n/layersentry-en-us.yaml
-          grep -q 'LayerSentry' dist-pkg/harvester-1.10.0-dev/harvester-1.10.0-dev.umd.min.js
+      - name: Upload qualified LayerSentry package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: layersentry-ui-qualified-${{ github.run_id }}
+          path: |
+            dist-pkg/
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 6
 
-          echo 'LayerSentry brand markers and internal compatibility identifiers are valid.'
+  standalone-builds:
+    name: Build ${{ matrix.target }} distribution
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - hosted
+          - embedded
 
-      - name: Guard known operator-facing upstream labels
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22
+
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      - name: Build selected distribution
+        shell: bash
+        env:
+          DISABLED_EMBED_PKG: https://releases.rancher.com/harvester-ui/plugin/harvester-1.0.3.tar.gz
         run: |
           set -euo pipefail
-          overlay='pkg/harvester/l10n/layersentry-en-us.yaml'
-          grep -q "productLabel: LayerSentry" "$overlay"
-          grep -q "header: 'LayerSentry Cluster: {cluster}'" "$overlay"
-          grep -q "description: LayerSentry supports filesystem volumes" "$overlay"
-          grep -q "successMessage: 'LayerSentry can successfully connect" "$overlay"
-          grep -q "'harv-log-level': Configure LayerSentry" "$overlay"
-          grep -q "'harv-auto-disk-provision-paths': Specify disks" "$overlay"
-          grep -q "'harv-kubeconfig-default-token-ttl-minutes': TTL in minutes applied to LayerSentry" "$overlay"
-          echo 'Known operator-facing Harvester labels are overridden by LayerSentry locale entries.'
+          case "${{ matrix.target }}" in
+            hosted)
+              ./scripts/build-hosted
+              ;;
+            embedded)
+              ./scripts/build-embedded
+              ;;
+            *)
+              echo "Unsupported build target: ${{ matrix.target }}"
+              exit 64
+              ;;
+          esac
+
+      - name: Confirm non-empty build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.target }}" in
+            hosted)
+              test -d dist
+              test "$(find dist -type f | wc -l)" -gt 10
+              ;;
+            embedded)
+              mapfile -t archives < <(
+                find dist -type f \( -name '*.tar.gz' -o -name '*.tgz' \) -print
+              )
+              test "${#archives[@]}" -gt 0
+              ;;
+          esac
+          echo "LayerSentry ${{ matrix.target }} build: PASS"

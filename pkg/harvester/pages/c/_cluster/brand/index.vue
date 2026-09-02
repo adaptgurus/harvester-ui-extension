@@ -16,12 +16,16 @@ import { SETTING } from '@shell/config/settings';
 import { _EDIT, _VIEW } from '@shell/config/query-params';
 import { setFavIcon } from '@shell/utils/favicon';
 import { syncLayerSentrySingleProductBranding } from '../../../../config/layersentry-cluster';
+
 const Color = require('color');
+const SAFE_IMAGE_DATA_URL = /^data:image\/(?:png|jpe?g|svg\+xml)(?:;charset=[^;,]+)?;base64,/i;
+const UNSAFE_SVG_CONTENT = /<\s*(?:script|foreignObject|iframe|object|embed)\b|javascript:|on(?:load|error|click)\s*=|(?:href|xlink:href)\s*=\s*["']https?:/i;
 
 export default {
   components: {
     LabeledInput, Checkbox, FileSelector, Loading, SimpleBox, AsyncButton, Banner, ColorInput, TypeDescription
   },
+
   async fetch() {
     const hash = await allHash({
       uiPLSetting:        this.$store.dispatch('management/find', { type: MANAGEMENT.SETTING, id: SETTING.PL }),
@@ -33,33 +37,37 @@ export default {
     });
 
     Object.assign(this, hash);
+
     if (hash.uiLogoDarkSetting.value) {
-      try {
-        this.uiLogoDark = hash.uiLogoDarkSetting.value;
-        this.customizeLogo = true;
-      } catch {}
+      this.uiLogoDark = hash.uiLogoDarkSetting.value;
+      this.customizeLogo = true;
     }
+
     if (hash.uiLogoLightSetting.value) {
-      try {
-        this.uiLogoLight = hash.uiLogoLightSetting.value;
-        this.customizeLogo = true;
-      } catch {}
+      this.uiLogoLight = hash.uiLogoLightSetting.value;
+      this.customizeLogo = true;
     }
+
     if (hash.uiFaviconSetting.value) {
-      try {
-        this.uiFavicon = hash.uiFaviconSetting.value;
-        this.customizeFavicon = true;
-      } catch {}
+      this.uiFavicon = hash.uiFaviconSetting.value;
+      this.customizeFavicon = true;
     }
-    if (hash.uiColorSetting.value) {
-      this.uiColor = Color(hash.uiColorSetting.value).hex();
-      this.customizeColor = true;
-    }
-    if (hash.uiLinkColorSetting.value) {
-      this.uiLinkColor = Color(hash.uiLinkColorSetting.value).hex();
-      this.customizeLinkColor = true;
+
+    try {
+      if (hash.uiColorSetting.value) {
+        this.uiColor = Color(hash.uiColorSetting.value).hex();
+        this.customizeColor = true;
+      }
+
+      if (hash.uiLinkColorSetting.value) {
+        this.uiLinkColor = Color(hash.uiLinkColorSetting.value).hex();
+        this.customizeLinkColor = true;
+      }
+    } catch (err) {
+      this.setError(err);
     }
   },
+
   data() {
     return {
       vendor:             getVendor(),
@@ -81,16 +89,23 @@ export default {
       errors:             [],
     };
   },
+
   computed: {
     mode() {
       const schema = this.$store.getters[`management/schemaFor`](MANAGEMENT.SETTING);
 
       return schema?.resourceMethods?.includes('PUT') ? _EDIT : _VIEW;
     },
+
+    isEditable() {
+      return this.mode === _EDIT;
+    },
+
     customLinkColor() {
       return { color: this.uiLinkColor };
     }
   },
+
   mounted() {
     let uiColor = getComputedStyle(document.body).getPropertyValue('--primary');
     let uiLinkColor = getComputedStyle(document.body).getPropertyValue('--link');
@@ -100,44 +115,100 @@ export default {
       uiColor = getComputedStyle(suse).getPropertyValue('--primary');
       uiLinkColor = getComputedStyle(suse).getPropertyValue('--link');
     }
-    // Only set the color to the default if not already set from the custom color
+
     this.uiColor = this.uiColor || uiColor.trim();
     this.uiLinkColor = this.uiLinkColor || uiLinkColor.trim();
   },
+
   methods: {
     updateLogo(img, key) {
-      this[key] = img;
-    },
-    setError(e) {
-      this.errors = [];
-      this.errors.push(e);
-    },
-    async save(btnCB) {
-      this.uiPLSetting.value = this.uiPLSetting.value.replaceAll(/[\<>&=#()"]/gm, '');
-      if (this.customizeLogo) {
-        this.uiLogoLightSetting.value = this.uiLogoLight;
-        this.uiLogoDarkSetting.value = this.uiLogoDark;
-      } else {
-        this.uiLogoLightSetting.value = '';
-        this.uiLogoDarkSetting.value = '';
-      }
-      if (this.customizeFavicon) {
-        this.uiFaviconSetting.value = this.uiFavicon;
-      } else {
-        this.uiFaviconSetting.value = '';
-      }
-      if (this.customizeColor) {
-        this.uiColorSetting.value = Color(this.uiColor).rgb().string();
-      } else {
-        this.uiColorSetting.value = null;
-      }
-      if (this.customizeLinkColor) {
-        this.uiLinkColorSetting.value = Color(this.uiLinkColor).rgb().string();
-      } else {
-        this.uiLinkColorSetting.value = null;
-      }
-      this.errors = [];
       try {
+        this.validateImageDataUrl(img);
+        this[key] = img;
+        this.errors = [];
+      } catch (err) {
+        this.setError(err);
+      }
+    },
+
+    setError(err) {
+      const message = err?.message || String(err);
+
+      this.errors = [message];
+    },
+
+    normalizeVendor(value) {
+      const normalized = String(value || '')
+        .replace(/[<>&=#()"]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!normalized) {
+        throw new Error(this.t('layersentryBranding.validation.productNameRequired'));
+      }
+
+      return normalized;
+    },
+
+    validateImageDataUrl(value) {
+      if (!value || !SAFE_IMAGE_DATA_URL.test(value)) {
+        throw new Error(this.t('layersentryBranding.validation.imageType'));
+      }
+
+      if (value.toLowerCase().startsWith('data:image/svg+xml')) {
+        const payload = value.slice(value.indexOf(',') + 1);
+        let svg = '';
+
+        try {
+          svg = window.atob(payload);
+        } catch {
+          throw new Error(this.t('layersentryBranding.validation.imageInvalid'));
+        }
+
+        if (UNSAFE_SVG_CONTENT.test(svg)) {
+          throw new Error(this.t('layersentryBranding.validation.svgUnsafe'));
+        }
+      }
+    },
+
+    async save(btnCB) {
+      this.errors = [];
+
+      try {
+        const vendor = this.normalizeVendor(this.uiPLSetting.value);
+
+        if (this.customizeLogo) {
+          if (!this.uiLogoLight && !this.uiLogoDark) {
+            throw new Error(this.t('layersentryBranding.validation.logoRequired'));
+          }
+
+          if (this.uiLogoLight) {
+            this.validateImageDataUrl(this.uiLogoLight);
+          }
+
+          if (this.uiLogoDark) {
+            this.validateImageDataUrl(this.uiLogoDark);
+          }
+        }
+
+        if (this.customizeFavicon) {
+          if (!this.uiFavicon) {
+            throw new Error(this.t('layersentryBranding.validation.faviconRequired'));
+          }
+
+          this.validateImageDataUrl(this.uiFavicon);
+        }
+
+        const primaryColor = this.customizeColor ? Color(this.uiColor).rgb().string() : null;
+        const linkColor = this.customizeLinkColor ? Color(this.uiLinkColor).rgb().string() : null;
+
+        this.uiPLSetting.value = vendor;
+        this.uiLogoLightSetting.value = this.customizeLogo ? this.uiLogoLight : '';
+        this.uiLogoDarkSetting.value = this.customizeLogo ? this.uiLogoDark : '';
+        this.uiFaviconSetting.value = this.customizeFavicon ? this.uiFavicon : '';
+        this.uiColorSetting.value = primaryColor;
+        this.uiLinkColorSetting.value = linkColor;
+
         await Promise.all([
           this.uiPLSetting.save(),
           this.uiLogoDarkSetting.save(),
@@ -146,32 +217,41 @@ export default {
           this.uiLinkColorSetting.save(),
           this.uiFaviconSetting.save()
         ]);
-        if (this.uiPLSetting.value !== this.vendor) {
-          setVendor(this.uiPLSetting.value);
+
+        if (vendor !== this.vendor) {
+          setVendor(vendor);
+          this.vendor = vendor;
         }
+
         setFavIcon(this.$store);
         syncLayerSentrySingleProductBranding(this.$store);
         btnCB(true);
       } catch (err) {
-        this.errors.push(err);
+        this.setError(err);
         btnCB(false);
       }
     },
   }
 };
 </script>
+
 <template>
   <Loading v-if="$fetchState.pending" />
-  <div
+  <section
     v-else
     class="layersentry-branding"
+    aria-labelledby="layersentry-branding-title"
   >
     <div class="layersentry-page-intro">
-      <h1 class="mb-20">
+      <h1
+        id="layersentry-branding-title"
+        class="mb-20"
+      >
         {{ t('branding.label') }}
       </h1>
       <TypeDescription resource="harvester" />
     </div>
+
     <div class="layersentry-brand-section">
       <div class="row mb-20">
         <div class="col span-6">
@@ -180,15 +260,17 @@ export default {
             :label="t('branding.uiPL.label')"
             :mode="mode"
             :maxlength="100"
+            autocomplete="organization"
           />
         </div>
       </div>
+
       <h3 class="mt-20 mb-5 pb-5">
         {{ t('branding.logos.label') }}
       </h3>
-      <label class="text-label">
+      <p class="text-label">
         {{ t('harvester.branding.logos.tip', {}, true) }}
-      </label>
+      </p>
       <div class="row mt-10 mb-20">
         <Checkbox
           v-model:value="customizeLogo"
@@ -196,6 +278,7 @@ export default {
           :mode="mode"
         />
       </div>
+
       <div
         v-if="customizeLogo"
         class="row mb-20"
@@ -216,13 +299,17 @@ export default {
             v-if="uiLogoLight || uiLogoDark"
             class="theme-light mb-10"
           >
-            <label class="text-muted">{{ t('branding.logos.lightPreview') }}</label>
+            <span class="preview-label">
+              {{ t('branding.logos.lightPreview') }}
+            </span>
             <img
               class="logo-preview"
               :src="uiLogoLight ? uiLogoLight : uiLogoDark"
+              :alt="t('layersentryBranding.preview.lightLogoAlt')"
             >
           </SimpleBox>
         </div>
+
         <div class="col logo-container span-6">
           <div class="mb-10">
             <FileSelector
@@ -239,20 +326,24 @@ export default {
             v-if="uiLogoDark || uiLogoLight"
             class="theme-dark mb-10"
           >
-            <label class="text-muted">{{ t('branding.logos.darkPreview') }}</label>
+            <span class="preview-label">
+              {{ t('branding.logos.darkPreview') }}
+            </span>
             <img
               class="logo-preview"
               :src="uiLogoDark ? uiLogoDark : uiLogoLight"
+              :alt="t('layersentryBranding.preview.darkLogoAlt')"
             >
           </SimpleBox>
         </div>
       </div>
+
       <h3 class="mt-20 mb-5 pb-5">
         {{ t('branding.favicon.label') }}
       </h3>
-      <label class="text-label">
+      <p class="text-label">
         {{ t('harvester.branding.favicon.tip', {}, true) }}
-      </label>
+      </p>
       <div class="row mt-10 mb-20">
         <Checkbox
           v-model:value="customizeFavicon"
@@ -260,6 +351,7 @@ export default {
           :mode="mode"
         />
       </div>
+
       <div
         v-if="customizeFavicon"
         class="row mb-20"
@@ -277,20 +369,24 @@ export default {
             />
           </div>
           <SimpleBox v-if="uiFavicon">
-            <label class="text-muted">{{ t('branding.favicon.preview') }}</label>
+            <span class="preview-label">
+              {{ t('branding.favicon.preview') }}
+            </span>
             <img
-              class="logo-preview"
+              class="favicon-preview"
               :src="uiFavicon"
+              :alt="t('layersentryBranding.preview.faviconAlt')"
             >
           </SimpleBox>
         </div>
       </div>
+
       <h3 class="mt-40 mb-5 pb-0">
         {{ t('branding.color.label') }}
       </h3>
-      <label class="text-label">
+      <p class="text-label">
         {{ t('branding.color.tip', {}, true) }}
-      </label>
+      </p>
       <div class="row mt-20">
         <Checkbox
           v-model:value="customizeColor"
@@ -307,12 +403,13 @@ export default {
           component-testid="primary"
         />
       </div>
+
       <h3 class="mt-40 mb-5 pb-0">
         {{ t('branding.linkColor.label') }}
       </h3>
-      <label class="text-label">
+      <p class="text-label">
         {{ t('branding.linkColor.tip', {}, true) }}
-      </label>
+      </p>
       <div class="row mt-20">
         <Checkbox
           v-model:value="customizeLinkColor"
@@ -330,22 +427,29 @@ export default {
           component-testid="link"
         />
         <span class="col link-example">
-          <a :style="customLinkColor">
+          <span
+            class="link-preview"
+            :style="customLinkColor"
+          >
             {{ t('branding.linkColor.example') }}
-          </a>
+          </span>
         </span>
       </div>
     </div>
-    <template
-      v-for="(err, i) in errors"
-      :key="i"
+
+    <div
+      v-if="errors.length"
+      aria-live="polite"
     >
       <Banner
+        v-for="(err, i) in errors"
+        :key="i"
         color="error"
         :label="err"
       />
-    </template>
-    <div v-if="mode === 'edit'">
+    </div>
+
+    <div v-if="isEditable">
       <AsyncButton
         component-testid="branding-apply"
         class="pull-right mt-20"
@@ -353,36 +457,58 @@ export default {
         @click="save"
       />
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .link-example {
+  align-items: center;
   display: flex;
-  align-content: center;
-  a {
-    margin: auto;
-  }
 }
+
+.link-preview {
+  font-weight: 600;
+  margin: auto;
+}
+
 .logo-container {
   display: flex;
   flex-direction: column;
+
   :deep().simple-box {
-    position: relative;
     flex: 1;
-    max-height: 120px;
+    max-height: 140px;
+    min-height: 100px;
+    position: relative;
+
     .content {
-      height: 100%;
+      align-items: center;
       display: flex;
-    }
-    .logo-preview {
-      max-width: 100%;
+      height: 100%;
+      justify-content: center;
+      padding-top: 28px;
     }
   }
-  & LABEL {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-  }
+}
+
+.preview-label {
+  color: var(--ls-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  left: 10px;
+  position: absolute;
+  top: 10px;
+}
+
+.logo-preview {
+  max-height: 72px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.favicon-preview {
+  height: 48px;
+  object-fit: contain;
+  width: 48px;
 }
 </style>
