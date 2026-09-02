@@ -120,10 +120,14 @@ jobs:
           plugin_bytes=$(stat -c '%s' layersentry-offline-ui-assets/harvester-v1.8.2.tar.gz)
           source_commit=$(git rev-parse HEAD)
 
-          sha512sum \
-            layersentry-offline-ui-assets/v1.8.2.tar.gz \
-            layersentry-offline-ui-assets/harvester-v1.8.2.tar.gz \
-            > layersentry-offline-ui-assets/SHA512SUMS
+          (
+            cd layersentry-offline-ui-assets
+            sha512sum \
+              v1.8.2.tar.gz \
+              harvester-v1.8.2.tar.gz \
+              > SHA512SUMS
+            sha512sum -c SHA512SUMS
+          )
 
           cat > layersentry-offline-ui-assets/manifest.yaml <<EOF
           apiVersion: release.layersentry.io/v1
@@ -165,6 +169,8 @@ jobs:
           - \`v1.8.2.tar.gz\`: embedded standalone dashboard payload expected by the Harvester v1.8.2 image build.
           - \`harvester-v1.8.2.tar.gz\`: embedded Harvester plugin payload expected by the Harvester v1.8.2 image build.
 
+          Verify the extracted bundle with \`sha512sum -c SHA512SUMS\` before use.
+
           These assets are build-qualified only. They are not yet proven inside a Harvester image or LayerSentry ISO.
           EOF
 
@@ -180,11 +186,12 @@ jobs:
             echo "- Dashboard SHA-512: \`${dashboard_sha512}\`"
             echo "- Plugin bytes: \`${plugin_bytes}\`"
             echo "- Plugin SHA-512: \`${plugin_sha512}\`"
+            echo '- Extracted bundle checksum verification: `sha512sum -c SHA512SUMS`'
             echo '- Harvester image/ISO integration remains pending'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload immutable offline UI asset bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: layersentry-v1.8.2-offline-ui-assets
           path: layersentry-offline-ui-assets/
