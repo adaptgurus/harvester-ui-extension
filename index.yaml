@@ -14,9 +14,9 @@ entries:
       catalog.cattle.io/ui-extensions-version: '>= 3.0.0 < 4.0.0'
     apiVersion: v2
     appVersion: 1.10.0-dev
-    created: "2026-09-02T18:11:27.495708118Z"
+    created: "2026-09-02T20:29:28.022128319Z"
     description: LayerSentry enterprise HCI and virtualization management UI
-    digest: 2172c921688c51a8e3e53cbed9021dcfaa6c1af90144fc95914ea6d37ffc4f60
+    digest: 5ae4f08b0f34b8c511d1360182fcb5e982ece20d5712a43bb98cf19cd1eeb090
     icon: https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/main/pkg/harvester/icon.svg
     name: harvester
     type: application
@@ -419,4 +419,4 @@ entries:
     urls:
     - assets/harvester/harvester-1.6.0-rc6.tgz
     version: 1.6.0-rc6
-generated: "2026-09-02T18:11:27.495227244Z"
+generated: "2026-09-02T20:29:28.021594951Z"
