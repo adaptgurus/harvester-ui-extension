@@ -3,7 +3,7 @@ entries:
   harvester:
   - annotations:
       catalog.cattle.io/certified: rancher
-      catalog.cattle.io/display-name: Harvester
+      catalog.cattle.io/display-name: LayerSentry
       catalog.cattle.io/kube-version: '>= 1.16.0-0'
       catalog.cattle.io/namespace: cattle-ui-plugin-system
       catalog.cattle.io/os: linux
@@ -14,10 +14,10 @@ entries:
       catalog.cattle.io/ui-extensions-version: '>= 3.0.0 < 4.0.0'
     apiVersion: v2
     appVersion: 1.10.0-dev
-    created: "2026-08-25T08:28:43.466456353Z"
-    description: Rancher UI Extension for Harvester
-    digest: ce91620e78041a11164934783338fae2abf44c8442999b1cf475516fba4bb462
-    icon: https://raw.githubusercontent.com/harvester/harvester-ui-extension/main/pkg/harvester/icon.svg
+    created: "2026-09-02T18:11:27.495708118Z"
+    description: LayerSentry enterprise HCI and virtualization management UI
+    digest: 2172c921688c51a8e3e53cbed9021dcfaa6c1af90144fc95914ea6d37ffc4f60
+    icon: https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/main/pkg/harvester/icon.svg
     name: harvester
     type: application
     urls:
@@ -419,4 +419,4 @@ entries:
     urls:
     - assets/harvester/harvester-1.6.0-rc6.tgz
     version: 1.6.0-rc6
-generated: "2026-08-25T08:28:43.465075459Z"
+generated: "2026-09-02T18:11:27.495227244Z"

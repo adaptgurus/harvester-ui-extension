@@ -1,10 +1,10 @@
 {
   "name": "harvester",
-  "description": "Rancher UI Extension for Harvester",
+  "description": "LayerSentry enterprise HCI and virtualization management UI",
   "version": "1.10.0-dev",
   "private": false,
   "rancher": true,
-  "icon": "https://raw.githubusercontent.com/harvester/harvester-ui-extension/main/pkg/harvester/icon.svg",
+  "icon": "https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/main/pkg/harvester/icon.svg",
   "engines": {
     "node": ">=24.0.0"
   },
