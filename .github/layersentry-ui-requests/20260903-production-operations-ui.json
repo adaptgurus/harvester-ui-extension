@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "requestId": "layersentry-production-operations-ui-20260903",
+  "operation": "APPLY_PRODUCTION_OPERATIONS_UI",
+  "targetBranch": "feat/layersentry-ui-production-readiness",
+  "productName": "LayerSentry",
+  "sourceHeadBeforeTooling": "7d0d41db94dd34209f940879daa1a3bc1c0a381b",
+  "scope": [
+    "add a LayerSentry operational dashboard introduction and semantic release metadata",
+    "localize dashboard event navigation and use stable resource keys",
+    "harden light dark reduced-motion and forced-colors presentation",
+    "replace the upstream upgrade release destination with controlled in-product release metadata",
+    "add keyboard and screen-reader semantics to upgrade status",
+    "enforce that bootstrap credentials never enter the browser bundle"
+  ],
+  "credentialMaterialUsed": false,
+  "credentialFileRead": false,
+  "credentialValuesCommitted": false,
+  "clusterMutationAuthorized": false,
+  "nodeReimageOrJoinModified": false,
+  "productionReleaseApproved": false
+}
