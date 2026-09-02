@@ -1,33 +1,35 @@
 unsupported:
   description: LayerSentry requires an underlying platform version greater than or equal to 1.3.0.
-  learnMore: 'For compatibility details, see the <a target="_blank" href="https://harvesterhci.io/" rel="noopener noreferrer nofollow">upstream Harvester website</a> or the <a target="_blank" href="https://docs.harvesterhci.io/" rel="noopener noreferrer nofollow">upstream Harvester documentation</a>.'
+  learnMore: Contact your LayerSentry administrator for compatibility guidance and validated upgrade paths.
 
 harvester:
   productLabel: LayerSentry
   branding:
     logos:
-      tip: 'Upload a logo to replace the LayerSentry logo in the top-level navigation header. Image height should be 21 pixels with a max width of 200 pixels. Max file size is 20KB. Accepted formats: JPEG, PNG, SVG.'
+      tip: 'Upload a logo to replace the LayerSentry logo in the top-level navigation header. Image height should be 21 pixels with a maximum width of 200 pixels. Maximum file size is 20 KB. Accepted formats: JPEG, PNG, and SVG.'
     favicon:
-      tip: 'Upload an icon to replace the LayerSentry favicon in the browser tab. Max file size is 20KB.'
+      tip: 'Upload an icon to replace the LayerSentry favicon in the browser tab. Maximum file size is 20 KB.'
   modal:
     bundle:
-      titleDescription: Collect system-related logs in LayerSentry to assist with troubleshooting and support.
+      title: Generate support bundle
+      titleDescription: Collect platform logs and diagnostics from LayerSentry for controlled troubleshooting.
   tableHeaders:
     routeConnectivityTooltip: Connectivity between the VM network and the management network used by LayerSentry nodes.
   dashboard:
     header: 'LayerSentry Cluster: {cluster}'
+    version: Platform version
   virtualMachine:
     filesystem:
-      description: LayerSentry supports filesystem volumes for virtual machines via virtiofs.
+      description: LayerSentry supports filesystem volumes for virtual machines through virtiofs.
   networkPolicy:
-    banner: 'Network policies must be used for VMs attached to overlay networks. See the <a href="{url}" target="_blank">upstream documentation</a> for network-policy behavior.'
+    banner: Network policies must be used for virtual machines attached to overlay networks. Review the validated network-policy guidance supplied for this LayerSentry deployment.
   setting:
     httpProxy:
       warning: 'WARNING: <br/> If you configure "http-proxy" and "https-proxy", you must also put the LayerSentry node&apos;s CIDR into "no-proxy"; otherwise cluster networking can be disrupted.'
     harvesterMonitoring:
       label: LayerSentry Monitoring
   upgrade:
-    releaseTip: 'Please read the upgrade documentation carefully. You can view details in the <a href="{url}" target="_blank">upstream release notes</a>.'
+    releaseTip: Review the validated release notes, compatibility matrix, backup status, and change-management instructions supplied for this LayerSentry build before continuing.
     checkReady: I have read and understood the upgrade instructions related to this LayerSentry deployment.
   backup:
     schedule:
@@ -38,32 +40,39 @@ harvester:
         successMessage: 'LayerSentry can successfully connect to the endpoint {endpoint}'
   clusterRegistrationUrl:
     tip:
-      prefix: 'LayerSentry secures cluster registration via TLS by default. If you opt out of "Insecure Skip TLS Verify", you must provide custom CA certificates using the'
-    message: 'To completely unset the imported cluster, also remove it on the Rancher Dashboard UI through the <code>Virtualization Management</code> page.'
+      prefix: 'LayerSentry secures cluster registration through TLS by default. If you opt out of "Insecure Skip TLS Verify", you must provide custom CA certificates using the'
+    message: To completely unset the imported cluster, also remove it from the embedded virtualization-management interface.
   support:
     title: LayerSentry Support
+    kubeconfig:
+      title: Download administrative kubeconfig
+      titleDescription: Download a short-lived administrative configuration only when required by an approved operational procedure.
     internal:
       rancher:
-        titleDescription: 'Use the embedded Rancher UI only for debugging and validation. For details about the underlying Harvester/Rancher integration, see the <a target="_blank" href="{url}" rel="noopener noreferrer nofollow">upstream documentation</a>.'
+        title: LayerSentry management diagnostics
+        titleDescription: Use the embedded management interface only for controlled debugging and validation.
+      longhorn:
+        title: LayerSentry storage diagnostics
+        titleDescription: Use the embedded storage interface only for controlled debugging and validation.
     community:
-      learnMore: Upstream Harvester support information
-      pricing: Upstream support options
+      learnMore: Platform support information
+      pricing: Support entitlement information
   addons:
     descriptions:
-      'harvester-system/vm-import-controller': vm-import-controller helps migrate virtual machine workloads from source environments to an existing LayerSentry cluster.
-      'harvester-system/pcidevices-controller': pcidevices-controller discovers PCI devices on LayerSentry nodes and prepares devices for PCI passthrough to virtual machines and guest clusters.
-      'cattle-logging-system/rancher-logging': rancher-logging collects logs, events, and audits from the LayerSentry cluster and routes them to configured destinations.
-      'cattle-monitoring-system/rancher-monitoring': rancher-monitoring collects LayerSentry cluster and virtual machine metrics for embedded dashboards and remote alerts.
-      'vm-import-controller': vm-import-controller helps migrate virtual machine workloads from source environments to an existing LayerSentry cluster.
-      'pcidevices-controller': pcidevices-controller discovers PCI devices on LayerSentry nodes and prepares devices for PCI passthrough to virtual machines and guest clusters.
-      'nvidia-driver-toolkit': nvidia-driver-toolkit enables vGPU devices for LayerSentry virtual machines.
-      'rancher-logging': rancher-logging collects logs, events, and audits from the LayerSentry cluster and routes them to configured destinations.
-      'rancher-monitoring': rancher-monitoring collects LayerSentry cluster and virtual machine metrics for embedded dashboards and remote alerts.
+      'harvester-system/vm-import-controller': The virtual-machine import controller migrates workloads from supported source environments into an existing LayerSentry cluster.
+      'harvester-system/pcidevices-controller': The PCI-device controller discovers LayerSentry node devices and prepares approved devices for passthrough to virtual machines and guest clusters.
+      'cattle-logging-system/rancher-logging': The logging add-on collects LayerSentry logs, events, and audit records and routes them to configured destinations.
+      'cattle-monitoring-system/rancher-monitoring': The monitoring add-on collects LayerSentry cluster and virtual-machine metrics for dashboards and alerting.
+      'vm-import-controller': The virtual-machine import controller migrates workloads from supported source environments into an existing LayerSentry cluster.
+      'pcidevices-controller': The PCI-device controller discovers LayerSentry node devices and prepares approved devices for passthrough to virtual machines and guest clusters.
+      'nvidia-driver-toolkit': The NVIDIA driver toolkit enables approved vGPU devices for LayerSentry virtual machines.
+      'rancher-logging': The logging add-on collects LayerSentry logs, events, and audit records and routes them to configured destinations.
+      'rancher-monitoring': The monitoring add-on collects LayerSentry cluster and virtual-machine metrics for dashboards and alerting.
     vmImport:
       provider:
-        requirementsText: To migrate virtual machines from VMware, use a vCenter Server 6.5 or later with an account that has at least read permissions. The source environment must be network-accessible from the LayerSentry node.
+        requirementsText: To migrate virtual machines from VMware, use a vCenter Server 6.5 or later with an account that has at least read permissions. The source environment must be network-accessible from a LayerSentry node.
       dashboard:
-        description: Migrate virtual machines from VMware vSphere to LayerSentry using cold migration for data consistency. Create a migration plan to select VMs, map networks and storage, and prepare the migration.
+        description: Migrate virtual machines from VMware vSphere to LayerSentry using cold migration for data consistency. Create a migration plan to select virtual machines, map networks and storage, and prepare the migration.
       configureMappings:
         description: Map VMware networks and datastores to LayerSentry target resources
         networkMapping:
@@ -71,27 +80,84 @@ harvester:
           placeholder: Choose a LayerSentry network
         storageMapping:
           description: Map VMware datastores to LayerSentry storage classes
-          placeholder: Choose a LayerSentry Storage Class
+          placeholder: Choose a LayerSentry storage class
   pci:
-    noPermission: Please contact your system administrator to add LayerSentry add-ons first.
+    noPermission: Contact your system administrator to add the required LayerSentry add-ons first.
   vgpu:
-    noPermission: Please contact your system administrator to add LayerSentry add-ons first.
+    noPermission: Contact your system administrator to add the required LayerSentry add-ons first.
   usb:
-    noPermission: Please contact your system administrator to add LayerSentry add-ons first.
+    noPermission: Contact your system administrator to add the required LayerSentry add-ons first.
+
+layersentryBranding:
+  preview:
+    lightLogoAlt: Preview of the logo on a light background
+    darkLogoAlt: Preview of the logo on a dark background
+    faviconAlt: Preview of the browser favicon
+  validation:
+    productNameRequired: Enter a product name before applying branding.
+    imageType: Select a PNG, JPEG, or SVG image encoded as a local image file.
+    imageInvalid: The selected image could not be decoded.
+    svgUnsafe: The selected SVG contains active or externally loaded content and cannot be used.
+    logoRequired: Select at least one light or dark logo, or disable custom logos.
+    faviconRequired: Select a favicon, or disable the custom favicon.
+
+layersentrySupport:
+  title: LayerSentry Support
+  overview:
+    title: Operational support
+    description: Collect the minimum evidence required for troubleshooting while keeping credentials, kubeconfig content, certificates, and other sensitive material out of screenshots, tickets, and shared artifacts.
+  context:
+    label: Deployment details
+    cluster: Cluster
+    version: Platform version
+    unavailable: Not available
+  actions:
+    label: Support actions
+    bundle:
+      title: Generate a support bundle
+      description: Collect platform diagnostics for an approved support case. Review the archive for sensitive information before transferring it.
+      action: Generate support bundle
+    kubeconfig:
+      title: Download administrative kubeconfig
+      description: Download administrative access only for an approved maintenance task. Store it securely and remove it when the task is complete.
+      action: Download kubeconfig
+    readiness:
+      title: Production-readiness checks
+      description: Confirm the following controls before declaring the environment ready for service.
+      nodes: All required nodes are Ready and stable after reboot.
+      storage: Storage replicas, disks, and capacity are healthy.
+      network: Management, virtual-machine, and service networking pass connectivity checks.
+      backup: Backup targets, restore procedures, and retention controls have been validated.
+    changeControl:
+      title: Change-control boundary
+      description: Perform upgrades, node replacement, certificate work, storage changes, and recovery operations only through an approved procedure with current evidence.
+      warning: Never place passwords, tokens, kubeconfig content, or private keys in a support artifact.
+  diagnostics:
+    title: Advanced diagnostics
+    description: These interfaces are visible only in developer mode and must not be used for routine administration.
+    management:
+      title: Management-plane diagnostics
+      description: Inspect low-level controllers and resources under change control.
+    storage:
+      title: Storage diagnostics
+      description: Inspect low-level storage state under change control.
+  security:
+    title: 'Security:'
+    description: Support bundles and administrative kubeconfigs can contain sensitive infrastructure information. Handle them as restricted operational data.
 
 typeDescription:
-  harvester: Branding allows administrators to customize the LayerSentry product name, logos, and color scheme.
+  harvester: Branding allows administrators to customize the LayerSentry product name, logos, favicon, and color scheme.
 
 advancedSettings:
   descriptions:
-    branding: Branding allows administrators to customize the LayerSentry product name, logos, and color scheme.
-    'harv-log-level': Configure LayerSentry server log level. Defaults to Info.
+    branding: Branding allows administrators to customize the LayerSentry product name, logos, favicon, and color scheme.
+    'harv-log-level': Configure the LayerSentry server log level. Defaults to Info.
     'harv-server-version': Underlying platform server version used for LayerSentry compatibility reporting.
     'harv-upgrade-checker-enabled': Specifies whether the underlying platform upgrade check is enabled. Defaults to True.
     'harv-upgrade-checker-url': Upgrade-check endpoint used by the underlying platform. Used only when upgrade-checker-enabled is True.
-    'harv-ui-source': Configure how the LayerSentry UI source is loaded. External loads the UI from a ui-index URL; Bundled loads it from the local platform server.
+    'harv-ui-source': Configure how the LayerSentry UI source is loaded. External loads the UI from a configured UI index; Bundled loads it from the local platform server.
     'harv-http-proxy': HTTP proxy used by LayerSentry to access external services.
-    'harv-auto-disk-provision-paths': Specify disks using a glob pattern that LayerSentry automatically adds as virtual machine storage.
-    'harv-release-download-url': Configure the upgrade release download URL used by LayerSentry to obtain release metadata, ISO locations, and checksums.
+    'harv-auto-disk-provision-paths': Specify disks using a glob pattern that LayerSentry automatically adds as virtual-machine storage.
+    'harv-release-download-url': Configure the approved release-metadata endpoint used by LayerSentry to obtain release details, ISO locations, and checksums.
     'harv-auto-rotate-rke2-certs': Certificate rotation relies on the embedded management plane. LayerSentry updates certificate generations to trigger rotation when required.
-    'harv-kubeconfig-default-token-ttl-minutes': TTL in minutes applied to LayerSentry administration kubeconfig files. Default is 0, which means tokens never expire.
+    'harv-kubeconfig-default-token-ttl-minutes': TTL in minutes applied to LayerSentry administrative kubeconfig files. Default is 0, which means tokens never expire.
