@@ -3,19 +3,27 @@ import * as harvesterCluster from './harvester-cluster';
 
 const LAYERSENTRY_VENDOR = 'LayerSentry';
 const UPSTREAM_DEFAULT_VENDOR = 'Harvester';
-const LAYERSENTRY_LOGO = require('../assets/layersentry/layer-sentry-logo.svg');
+const LAYERSENTRY_LOGO = require('../assets/layersentry/layer-sentry-icon.svg');
+
+function markLayerSentryDocument() {
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-product-brand', 'layersentry');
+  }
+}
 
 export function syncLayerSentrySingleProductBranding(store) {
-  const current = store.getters['isSingleProduct'];
-
-  if (!current || typeof current !== 'object') {
-    return;
-  }
-
   const vendor = getVendor();
 
   if (!vendor || vendor === UPSTREAM_DEFAULT_VENDOR) {
     setVendor(LAYERSENTRY_VENDOR);
+  }
+
+  markLayerSentryDocument();
+
+  const current = store.getters['isSingleProduct'];
+
+  if (!current || typeof current !== 'object') {
+    return;
   }
 
   store.dispatch('setIsSingleProduct', {

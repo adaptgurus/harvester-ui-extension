@@ -15,115 +15,231 @@ permissions:
   contents: read
 
 concurrency:
-  group: layersentry-1.8.2-production-validation-${{ github.ref }}
+  group: layersentry-1.8.2-production-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+
 jobs:
-  production-gate:
-    name: Stable build and complete brand contract
+  quality-and-package:
+    name: Stable identity, source contract, lint, package, and artifact
     runs-on: ubuntu-22.04
-    timeout-minutes: 45
+    timeout-minutes: 50
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - name: Checkout exact source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Setup Node 24
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: yarn
 
-      - name: Ensure Yarn Classic
+      - name: Install Yarn Classic
         run: |
           npm install --global yarn@1.22.22
           node --version
           yarn --version
 
-      - name: Verify stable release identity
+      - name: Verify stable LayerSentry and Rancher 2.14 identity
+        shell: bash
         run: |
           set -euo pipefail
-          node - <<'NODE'
+          node <<'NODE'
           const root = require('./package.json');
           const pkg = require('./pkg/harvester/package.json');
-          if (root.version !== '1.8.2') throw new Error(`root version must be 1.8.2, got ${root.version}`);
-          if (pkg.version !== '1.8.2') throw new Error(`UI package version must be 1.8.2, got ${pkg.version}`);
+          const annotations = pkg.rancher?.annotations || {};
+
+          if (root.version !== '1.8.2') {
+            throw new Error(`root version must be 1.8.2, got ${root.version}`);
+          }
+          if (pkg.version !== '1.8.2') {
+            throw new Error(`UI package version must be 1.8.2, got ${pkg.version}`);
+          }
           if (/-dev|-rc|-alpha|-beta/i.test(root.version) || /-dev|-rc|-alpha|-beta/i.test(pkg.version)) {
             throw new Error('prerelease/dev version detected');
           }
-          if (pkg.name !== 'harvester') throw new Error('technical package identity must remain harvester');
-          if (pkg.rancher?.annotations?.['catalog.cattle.io/display-name'] !== 'LayerSentry') {
+          if (pkg.name !== 'harvester') {
+            throw new Error('technical compatibility package identity must remain harvester');
+          }
+          if (annotations['catalog.cattle.io/display-name'] !== 'LayerSentry') {
             throw new Error('LayerSentry catalog display name missing');
           }
-          if (pkg.icon !== 'https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/release-layersentry-v1.8.2/pkg/harvester/icon.svg') {
-            throw new Error(`unexpected stable icon URL: ${pkg.icon}`);
+          if (annotations['catalog.cattle.io/rancher-version'] !== '>= 2.14.0-0') {
+            throw new Error(`expected Rancher 2.14 compatibility line, got ${annotations['catalog.cattle.io/rancher-version']}`);
           }
-          console.log(`Stable release identity: root=${root.version}, package=${pkg.version}`);
+          if (annotations['catalog.cattle.io/ui-extensions-version'] !== '>= 3.0.0 < 4.0.0') {
+            throw new Error('unexpected UI extensions API compatibility range');
+          }
+          const expectedIcon = 'https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/release-layersentry-v1.8.2/pkg/harvester/icon.svg';
+          if (pkg.icon !== expectedIcon) {
+            throw new Error(`unexpected controlled icon URL: ${pkg.icon}`);
+          }
+          if (root.engines?.node !== '>=24.0.0') {
+            throw new Error(`unexpected Node engine: ${root.engines?.node}`);
+          }
+
+          console.log(`LayerSentry stable identity: root=${root.version}, package=${pkg.version}`);
+          console.log(`Rancher compatibility: ${annotations['catalog.cattle.io/rancher-version']}`);
           NODE
 
-      - name: Frozen dependency install
-        run: yarn install --frozen-lockfile
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile --network-timeout 600000
 
-      - name: Lint
+      - name: Validate LayerSentry branding, operations UI, and credential isolation
+        run: yarn validate:layersentry
+
+      - name: Lint with zero warnings
         run: yarn lint
 
-      - name: Build stable LayerSentry extension
+      - name: Build stable LayerSentry extension package
         run: yarn build-pkg harvester
 
-      - name: Validate complete LayerSentry presentation contract
+      - name: Locate generated package
+        id: package
+        shell: bash
         run: |
           set -euo pipefail
-          test -s pkg/harvester/assets/layersentry/layer-sentry-icon.svg
-          test -s pkg/harvester/assets/layersentry/layer-sentry-logo.svg
-          test -s pkg/harvester/icon.svg
-          test -s pkg/harvester/config/layersentry-cluster.js
-          test -s pkg/harvester/l10n/layersentry-en-us.yaml
-          test -s pkg/harvester/styles/layersentry/_tokens.scss
-          test -s pkg/harvester/styles/layersentry/_theme.scss
-          test -s pkg/harvester/styles/layersentry/_components.scss
-          test -s pkg/harvester/styles/layersentry/index.scss
-
-          grep -Fq "PRODUCT_NAME = 'harvester'" pkg/harvester/config/harvester.ts
-          grep -Fq 'layer-sentry-icon.svg' pkg/harvester/config/harvester.ts
-          grep -Fq 'layer-sentry-logo.svg' pkg/harvester/config/layersentry-cluster.js
-          grep -Fq 'supportCustomLogo: true' pkg/harvester/config/layersentry-cluster.js
-          grep -Fq 'mergeWithReplace' pkg/harvester/index.ts
-          grep -Fq "plugin.register('l10n', 'en-us', mergedEnUs)" pkg/harvester/index.ts
-          grep -Fq 'syncLayerSentrySingleProductBranding(this.$store)' pkg/harvester/pages/c/_cluster/brand/index.vue
-          grep -Fq 'class="layersentry-branding"' pkg/harvester/pages/c/_cluster/brand/index.vue
-          grep -Fq 'class="layersentry-support"' pkg/harvester/pages/c/_cluster/support/index.vue
-          grep -Fq 'LayerSentry Cluster:' pkg/harvester/l10n/layersentry-en-us.yaml
-          grep -Fq 'LayerSentry Monitoring' pkg/harvester/l10n/layersentry-en-us.yaml
-          grep -Fq 'LayerSentry Support' pkg/harvester/l10n/layersentry-en-us.yaml
-          grep -Fq "'harv-auto-disk-provision-paths': Specify disks" pkg/harvester/l10n/layersentry-en-us.yaml
-          grep -Fq -- '--ls-brand-navy: #000f42' pkg/harvester/styles/layersentry/_tokens.scss
-
-          if grep -Fq "plugin.register('l10n', 'en-us', () => layersentryEnUs)" pkg/harvester/index.ts; then
-            echo 'The narrow LayerSentry overlay must not replace the complete base locale.' >&2
-            exit 1
-          fi
-          if grep -Fq -- '--ls-brand-cyan' pkg/harvester/styles/layersentry/_tokens.scss || grep -Fq -- '--ls-brand-mint' pkg/harvester/styles/layersentry/_tokens.scss; then
-            echo 'Unapproved secondary brand colors are present.' >&2
+          mapfile -t directories < <(
+            find dist-pkg -mindepth 1 -maxdepth 1 -type d -name 'harvester-*' -print | sort
+          )
+          if [ "${#directories[@]}" -ne 1 ]; then
+            printf 'Expected exactly one generated package directory; found %s\n' "${#directories[@]}"
+            printf '%s\n' "${directories[@]}"
             exit 1
           fi
 
-          test -d dist-pkg
-          count=$(find dist-pkg -type f | wc -l)
-          bytes=$(du -sb dist-pkg | awk '{print $1}')
-          echo "Generated files=$count bytes=$bytes"
-          test "$count" -gt 1
-          test "$bytes" -gt 1000000
-          grep -R -a -F -m 1 'LayerSentry' dist-pkg
+          bundle_dir="${directories[0]}"
+          mapfile -t bundles < <(
+            find "$bundle_dir" -maxdepth 1 -type f -name '*.umd.min.js' -print | sort
+          )
+          if [ "${#bundles[@]}" -ne 1 ]; then
+            printf 'Expected exactly one generated UMD bundle; found %s\n' "${#bundles[@]}"
+            printf '%s\n' "${bundles[@]}"
+            exit 1
+          fi
+
+          echo "bundle_dir=$bundle_dir" >> "$GITHUB_OUTPUT"
+          echo "bundle=${bundles[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate generated browser package
+        run: node scripts/validate-layersentry-branding.mjs --dist "${{ steps.package.outputs.bundle_dir }}"
+
+      - name: Reject enrollment material from browser output
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -a -E -m 1 \
+            'bootstrap-credentials\.json|nodePassword|clusterToken|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|apiVersion:[[:space:]]*v1[[:space:]]+clusters:' \
+            dist-pkg; then
+            echo 'Credential, kubeconfig, or private-key marker detected in generated browser output.' >&2
+            exit 1
+          fi
+          echo 'LAYERSENTRY GENERATED BROWSER CREDENTIAL ISOLATION: PASS'
+
+      - name: Create package checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          find dist-pkg -type f ! -name SHA256SUMS -print0 |
+            sort -z |
+            xargs -0 sha256sum > dist-pkg/SHA256SUMS
+          test -s dist-pkg/SHA256SUMS
+          grep -F '"product": "LayerSentry"' dist-pkg/layersentry-branding-manifest.json
+          cat dist-pkg/layersentry-branding-manifest.json
+          echo 'LAYERSENTRY UI PACKAGE CHECKSUMS: PASS'
+
+      - name: Upload qualified LayerSentry package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: layersentry-ui-v1.8.2-qualified-${{ github.run_id }}
+          path: dist-pkg/
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 6
 
       - name: Production dependency audit
         id: audit
         continue-on-error: true
         run: yarn audit --groups dependencies --level high
 
-      - name: Record audit result
+      - name: Record dependency audit outcome
         if: always()
+        shell: bash
         run: |
           echo "Dependency audit outcome: ${{ steps.audit.outcome }}"
           if [ "${{ steps.audit.outcome }}" != "success" ]; then
-            echo 'High/critical dependency findings or audit-service errors require review before final production sign-off.'
+            echo 'High/critical findings or an audit-service error remain a separate production sign-off item.'
           fi
+
+  standalone-builds:
+    name: Build ${{ matrix.target }} distribution
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - hosted
+          - embedded
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22
+
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      - name: Build selected distribution
+        shell: bash
+        env:
+          DISABLED_EMBED_PKG: https://releases.rancher.com/harvester-ui/plugin/harvester-1.0.3.tar.gz
+        run: |
+          set -euo pipefail
+          case "${{ matrix.target }}" in
+            hosted)
+              ./scripts/build-hosted
+              ;;
+            embedded)
+              ./scripts/build-embedded
+              ;;
+            *)
+              echo "Unsupported build target: ${{ matrix.target }}"
+              exit 64
+              ;;
+          esac
+
+      - name: Confirm non-empty build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.target }}" in
+            hosted)
+              test -d dist
+              test "$(find dist -type f | wc -l)" -gt 10
+              ;;
+            embedded)
+              mapfile -t archives < <(
+                find dist -type f \( -name '*.tar.gz' -o -name '*.tgz' \) -print
+              )
+              test "${#archives[@]}" -gt 0
+              ;;
+          esac
+          echo "LayerSentry ${{ matrix.target }} distribution: PASS"

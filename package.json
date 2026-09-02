@@ -44,6 +44,7 @@
     "clean": "./node_modules/@rancher/shell/scripts/clean",
     "lint": "./node_modules/.bin/eslint --max-warnings 0 --ext .js,.ts,.vue .",
     "lint:fix": "./node_modules/.bin/eslint --fix --max-warnings 0 --ext .js,.ts,.vue .",
+    "validate:layersentry": "node scripts/validate-layersentry-branding.mjs --source-only && node scripts/validate-layersentry-operations-ui.mjs",
     "build-pkg": "./node_modules/@rancher/shell/scripts/build-pkg.sh",
     "serve-pkgs": "./node_modules/@rancher/shell/scripts/serve-pkgs",
     "publish-pkgs": "./node_modules/@rancher/shell/scripts/extension/publish",
