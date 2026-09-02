@@ -1,17 +1,17 @@
 {
   "name": "harvester",
-  "description": "Rancher UI Extension for Harvester",
+  "description": "LayerSentry enterprise HCI and virtualization management UI",
   "version": "1.10.0-dev",
   "private": false,
   "rancher": {
     "annotations": {
-      "catalog.cattle.io/display-name": "Harvester",
+      "catalog.cattle.io/display-name": "LayerSentry",
       "catalog.cattle.io/kube-version": ">= 1.16.0-0",
       "catalog.cattle.io/rancher-version": ">= 2.15.0-0",
       "catalog.cattle.io/ui-extensions-version": ">= 3.0.0 < 4.0.0"
     }
   },
-  "icon": "https://raw.githubusercontent.com/harvester/harvester-ui-extension/main/pkg/harvester/icon.svg",
+  "icon": "https://raw.githubusercontent.com/adaptgurus/harvester-ui-extension/main/pkg/harvester/icon.svg",
   "scripts": {
     "dev": "./node_modules/.bin/nuxt dev",
     "nuxt": "./node_modules/.bin/nuxt"
