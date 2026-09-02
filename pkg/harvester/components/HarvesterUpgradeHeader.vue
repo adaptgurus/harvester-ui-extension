@@ -125,7 +125,6 @@ export default {
       return this.latestResource.repoInfo;
     },
 
-
     upgradeVersion() {
       return this.latestResource?.spec?.version;
     }
