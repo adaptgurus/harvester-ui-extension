@@ -392,37 +392,37 @@ export default {
     capacityCards() {
       return [
         {
-          key:            'cpu',
-          label:          this.t('harvester.dashboard.capacity.cpu'),
-          reservedLabel:  this.t('harvester.dashboard.capacity.reserved'),
-          reservedValue:  this.formatCores(this.cpuReserved),
+          key:             'cpu',
+          label:           this.t('harvester.dashboard.capacity.cpu'),
+          reservedLabel:   this.t('harvester.dashboard.capacity.reserved'),
+          reservedValue:   this.formatCores(this.cpuReserved),
           reservedPercent: this.percent(this.cpuReserved, this.cpusTotal),
-          usedLabel:      this.t('harvester.dashboard.capacity.used'),
-          usedValue:      this.formatCores(this.metricAggregations.cpu),
-          usedPercent:    this.percent(this.metricAggregations.cpu, this.cpusTotal),
-          total:          this.t('harvester.dashboard.capacity.totalCores', { total: this.formatCores(this.cpusTotal) }),
+          usedLabel:       this.t('harvester.dashboard.capacity.used'),
+          usedValue:       this.formatCores(this.metricAggregations.cpu),
+          usedPercent:     this.percent(this.metricAggregations.cpu, this.cpusTotal),
+          total:           this.t('harvester.dashboard.capacity.totalCores', { total: this.formatCores(this.cpusTotal) }),
         },
         {
-          key:            'memory',
-          label:          this.t('harvester.dashboard.capacity.memory'),
-          reservedLabel:  this.t('harvester.dashboard.capacity.reserved'),
-          reservedValue:  this.formatBytes(this.memoryReserved),
+          key:             'memory',
+          label:           this.t('harvester.dashboard.capacity.memory'),
+          reservedLabel:   this.t('harvester.dashboard.capacity.reserved'),
+          reservedValue:   this.formatBytes(this.memoryReserved),
           reservedPercent: this.percent(this.memoryReserved, this.memoryTotal),
-          usedLabel:      this.t('harvester.dashboard.capacity.used'),
-          usedValue:      this.formatBytes(this.metricAggregations.memory),
-          usedPercent:    this.percent(this.metricAggregations.memory, this.memoryTotal),
-          total:          this.t('harvester.dashboard.capacity.total', { total: this.formatBytes(this.memoryTotal) }),
+          usedLabel:       this.t('harvester.dashboard.capacity.used'),
+          usedValue:       this.formatBytes(this.metricAggregations.memory),
+          usedPercent:     this.percent(this.metricAggregations.memory, this.memoryTotal),
+          total:           this.t('harvester.dashboard.capacity.total', { total: this.formatBytes(this.memoryTotal) }),
         },
         {
-          key:            'storage',
-          label:          this.t('harvester.dashboard.capacity.storage'),
-          reservedLabel:  this.t('harvester.dashboard.capacity.allocated'),
-          reservedValue:  this.formatBytes(this.storageStats.scheduled),
+          key:             'storage',
+          label:           this.t('harvester.dashboard.capacity.storage'),
+          reservedLabel:   this.t('harvester.dashboard.capacity.allocated'),
+          reservedValue:   this.formatBytes(this.storageStats.scheduled),
           reservedPercent: this.percent(this.storageStats.scheduled, this.storageStats.total),
-          usedLabel:      this.t('harvester.dashboard.capacity.used'),
-          usedValue:      this.formatBytes(this.storageStats.used),
-          usedPercent:    this.percent(this.storageStats.used, this.storageStats.maximum),
-          total:          this.t('harvester.dashboard.capacity.total', { total: this.formatBytes(this.storageStats.maximum) }),
+          usedLabel:       this.t('harvester.dashboard.capacity.used'),
+          usedValue:       this.formatBytes(this.storageStats.used),
+          usedPercent:     this.percent(this.storageStats.used, this.storageStats.maximum),
+          total:           this.t('harvester.dashboard.capacity.total', { total: this.formatBytes(this.storageStats.maximum) }),
         },
       ];
     },
@@ -591,7 +591,10 @@ export default {
           role="status"
           aria-live="polite"
         >
-          <span class="layersentry-health-badge__dot" aria-hidden="true" />
+          <span
+            class="layersentry-health-badge__dot"
+            aria-hidden="true"
+          />
           {{ clusterHealthLabel }}
         </span>
         <dl class="layersentry-command-metadata">
@@ -613,7 +616,10 @@ export default {
       </div>
     </header>
 
-    <div v-if="!enabledMonitoringAddon && canEnableMonitoringAddon" class="mb-20">
+    <div
+      v-if="!enabledMonitoringAddon && canEnableMonitoringAddon"
+      class="mb-20"
+    >
       <Banner color="info">
         <MessageLink
           :to="toEnableMonitoringAddon"
@@ -624,11 +630,18 @@ export default {
       </Banner>
     </div>
 
-    <section class="layersentry-dashboard-section" aria-labelledby="layersentry-quick-actions-heading">
+    <section
+      class="layersentry-dashboard-section"
+      aria-labelledby="layersentry-quick-actions-heading"
+    >
       <div class="layersentry-section-heading">
         <div>
-          <p class="layersentry-section-kicker">{{ t('harvester.dashboard.quickActions.kicker') }}</p>
-          <h2 id="layersentry-quick-actions-heading">{{ t('harvester.dashboard.quickActions.title') }}</h2>
+          <p class="layersentry-section-kicker">
+            {{ t('harvester.dashboard.quickActions.kicker') }}
+          </p>
+          <h2 id="layersentry-quick-actions-heading">
+            {{ t('harvester.dashboard.quickActions.title') }}
+          </h2>
         </div>
         <p>{{ t('harvester.dashboard.quickActions.description') }}</p>
       </div>
@@ -640,21 +653,34 @@ export default {
           :to="action.to"
           class="layersentry-quick-action"
         >
-          <span class="layersentry-action-icon" aria-hidden="true">{{ action.short }}</span>
+          <span
+            class="layersentry-action-icon"
+            aria-hidden="true"
+          >{{ action.short }}</span>
           <span>
             <strong>{{ action.label }}</strong>
             <small>{{ action.description }}</small>
           </span>
-          <span class="layersentry-action-arrow" aria-hidden="true">→</span>
+          <span
+            class="layersentry-action-arrow"
+            aria-hidden="true"
+          >→</span>
         </router-link>
       </div>
     </section>
 
-    <section class="layersentry-dashboard-section" aria-labelledby="layersentry-posture-heading">
+    <section
+      class="layersentry-dashboard-section"
+      aria-labelledby="layersentry-posture-heading"
+    >
       <div class="layersentry-section-heading">
         <div>
-          <p class="layersentry-section-kicker">{{ t('harvester.dashboard.posture.kicker') }}</p>
-          <h2 id="layersentry-posture-heading">{{ t('harvester.dashboard.posture.title') }}</h2>
+          <p class="layersentry-section-kicker">
+            {{ t('harvester.dashboard.posture.kicker') }}
+          </p>
+          <h2 id="layersentry-posture-heading">
+            {{ t('harvester.dashboard.posture.title') }}
+          </h2>
         </div>
         <p>{{ t('harvester.dashboard.posture.description') }}</p>
       </div>
@@ -666,7 +692,10 @@ export default {
           class="layersentry-posture-card"
           :class="`tone-${item.tone}`"
         >
-          <span class="layersentry-posture-card__icon" aria-hidden="true">{{ item.short }}</span>
+          <span
+            class="layersentry-posture-card__icon"
+            aria-hidden="true"
+          >{{ item.short }}</span>
           <div>
             <p>{{ item.label }}</p>
             <strong>{{ item.value }}</strong>
@@ -676,11 +705,18 @@ export default {
       </div>
     </section>
 
-    <section class="layersentry-dashboard-section" aria-labelledby="layersentry-inventory-heading">
+    <section
+      class="layersentry-dashboard-section"
+      aria-labelledby="layersentry-inventory-heading"
+    >
       <div class="layersentry-section-heading">
         <div>
-          <p class="layersentry-section-kicker">{{ t('harvester.dashboard.resources.kicker') }}</p>
-          <h2 id="layersentry-inventory-heading">{{ t('harvester.dashboard.resources.title') }}</h2>
+          <p class="layersentry-section-kicker">
+            {{ t('harvester.dashboard.resources.kicker') }}
+          </p>
+          <h2 id="layersentry-inventory-heading">
+            {{ t('harvester.dashboard.resources.title') }}
+          </h2>
         </div>
         <p>{{ t('harvester.dashboard.resources.description') }}</p>
       </div>
@@ -700,17 +736,28 @@ export default {
       </div>
     </section>
 
-    <section class="layersentry-dashboard-section" aria-labelledby="layersentry-capacity-heading">
+    <section
+      class="layersentry-dashboard-section"
+      aria-labelledby="layersentry-capacity-heading"
+    >
       <div class="layersentry-section-heading">
         <div>
-          <p class="layersentry-section-kicker">{{ t('harvester.dashboard.capacity.kicker') }}</p>
-          <h2 id="layersentry-capacity-heading">{{ t('harvester.dashboard.capacity.title') }}</h2>
+          <p class="layersentry-section-kicker">
+            {{ t('harvester.dashboard.capacity.kicker') }}
+          </p>
+          <h2 id="layersentry-capacity-heading">
+            {{ t('harvester.dashboard.capacity.title') }}
+          </h2>
         </div>
         <p>{{ t('harvester.dashboard.capacity.description') }}</p>
       </div>
 
       <div class="layersentry-capacity-grid">
-        <article v-for="capacity in capacityCards" :key="capacity.key" class="layersentry-capacity-card">
+        <article
+          v-for="capacity in capacityCards"
+          :key="capacity.key"
+          class="layersentry-capacity-card"
+        >
           <div class="layersentry-capacity-card__heading">
             <h3>{{ capacity.label }}</h3>
             <span>{{ capacity.total }}</span>
@@ -721,8 +768,14 @@ export default {
               <span>{{ capacity.reservedLabel }}</span>
               <strong>{{ capacity.reservedValue }} · {{ capacity.reservedPercent }}%</strong>
             </div>
-            <div class="layersentry-capacity-meter__track" aria-hidden="true">
-              <span class="reserved" :style="{width: `${capacity.reservedPercent}%`}" />
+            <div
+              class="layersentry-capacity-meter__track"
+              aria-hidden="true"
+            >
+              <span
+                class="reserved"
+                :style="{width: `${capacity.reservedPercent}%`}"
+              />
             </div>
           </div>
 
@@ -731,8 +784,14 @@ export default {
               <span>{{ capacity.usedLabel }}</span>
               <strong>{{ capacity.usedValue }} · {{ capacity.usedPercent }}%</strong>
             </div>
-            <div class="layersentry-capacity-meter__track" aria-hidden="true">
-              <span class="used" :style="{width: `${capacity.usedPercent}%`}" />
+            <div
+              class="layersentry-capacity-meter__track"
+              aria-hidden="true"
+            >
+              <span
+                class="used"
+                :style="{width: `${capacity.usedPercent}%`}"
+              />
             </div>
           </div>
         </article>
@@ -746,8 +805,12 @@ export default {
     >
       <div class="layersentry-section-heading">
         <div>
-          <p class="layersentry-section-kicker">{{ t('harvester.dashboard.metrics.kicker') }}</p>
-          <h2 id="layersentry-metrics-heading">{{ t('harvester.dashboard.metrics.title') }}</h2>
+          <p class="layersentry-section-kicker">
+            {{ t('harvester.dashboard.metrics.kicker') }}
+          </p>
+          <h2 id="layersentry-metrics-heading">
+            {{ t('harvester.dashboard.metrics.title') }}
+          </h2>
         </div>
         <p>{{ t('harvester.dashboard.metrics.description') }}</p>
       </div>
@@ -786,23 +849,36 @@ export default {
       </Tabbed>
     </section>
 
-    <section class="layersentry-dashboard-section" aria-labelledby="layersentry-events-heading">
+    <section
+      class="layersentry-dashboard-section"
+      aria-labelledby="layersentry-events-heading"
+    >
       <div class="layersentry-section-heading">
         <div>
-          <p class="layersentry-section-kicker">{{ t('harvester.dashboard.activity.kicker') }}</p>
-          <h2 id="layersentry-events-heading">{{ t('harvester.dashboard.activity.title') }}</h2>
+          <p class="layersentry-section-kicker">
+            {{ t('harvester.dashboard.activity.kicker') }}
+          </p>
+          <h2 id="layersentry-events-heading">
+            {{ t('harvester.dashboard.activity.title') }}
+          </h2>
         </div>
         <p>{{ t('harvester.dashboard.activity.description') }}</p>
       </div>
 
-      <div v-if="recentEvents.length" class="layersentry-event-list">
+      <div
+        v-if="recentEvents.length"
+        class="layersentry-event-list"
+      >
         <article
           v-for="event in recentEvents"
           :key="event.id || `${eventResource(event)}-${eventTimestamp(event)}`"
           class="layersentry-event-row"
           :class="`tone-${eventTone(event)}`"
         >
-          <span class="layersentry-event-row__indicator" aria-hidden="true" />
+          <span
+            class="layersentry-event-row__indicator"
+            aria-hidden="true"
+          />
           <div class="layersentry-event-row__body">
             <div>
               <strong>{{ event.reason || t('harvester.dashboard.activity.event') }}</strong>
@@ -819,7 +895,11 @@ export default {
           />
         </article>
       </div>
-      <div v-else class="layersentry-empty-state" role="status">
+      <div
+        v-else
+        class="layersentry-empty-state"
+        role="status"
+      >
         <strong>{{ t('harvester.dashboard.activity.emptyTitle') }}</strong>
         <p>{{ t('harvester.dashboard.activity.emptyDescription') }}</p>
       </div>

@@ -131,7 +131,9 @@ function observeTitleChanges() {
   titleObserver = new MutationObserver(() => {
     syncLayerSentryBrowserBranding();
   });
-  titleObserver.observe(title, { childList: true, characterData: true, subtree: true });
+  titleObserver.observe(title, {
+    childList: true, characterData: true, subtree: true
+  });
 }
 
 export function installLayerSentryBrowserBranding() {
