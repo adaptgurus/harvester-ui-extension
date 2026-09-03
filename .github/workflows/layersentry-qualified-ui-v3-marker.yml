@@ -1,0 +1,138 @@
+name: LayerSentry Qualified UI v3 Result Marker
+
+on:
+  workflow_run:
+    workflows:
+      - LayerSentry v1.8.2 Qualified UI v3
+    types:
+      - completed
+    branches:
+      - release-layersentry-v1.8.2
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: layersentry-qualified-ui-v3-result-marker
+  cancel-in-progress: false
+
+jobs:
+  persist-result:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout evidence branch
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: release-layersentry-v1.8.2
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Fetch exact run job diagnostics
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          mkdir -p docs/build-evidence
+          gh api \
+            --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" > \
+            docs/build-evidence/layersentry-qualified-ui-v3-jobs.json
+
+      - name: Generate qualification result report
+        shell: bash
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          CREATED_AT: ${{ github.event.workflow_run.created_at }}
+          UPDATED_AT: ${{ github.event.workflow_run.updated_at }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence = Path('docs/build-evidence')
+          payload = json.loads((evidence / 'layersentry-qualified-ui-v3-jobs.json').read_text())
+          jobs = payload.get('jobs', [])
+          rows = []
+          failed = []
+
+          for job in jobs:
+              rows.append(
+                  f"| {job.get('name', '')} | {job.get('status', '')} | "
+                  f"{job.get('conclusion') or ''} |"
+              )
+              for step in job.get('steps') or []:
+                  if step.get('conclusion') == 'failure':
+                      failed.append(
+                          f"- `{job.get('name', '')}` → `{step.get('name', '')}`"
+                      )
+
+          report = f"""# LayerSentry v1.8.2 qualified UI v3 — latest result
+
+          - Product: LayerSentry
+          - Qualification contract: v3
+          - Source commit: {os.environ['HEAD_SHA']}
+          - Workflow run: {os.environ['RUN_ID']}
+          - Run number: {os.environ['RUN_NUMBER']}
+          - Run attempt: {os.environ['RUN_ATTEMPT']}
+          - Conclusion: **{os.environ['CONCLUSION']}**
+          - Created: {os.environ['CREATED_AT']}
+          - Updated: {os.environ['UPDATED_AT']}
+          - Workflow URL: {os.environ['RUN_URL']}
+
+          ## Jobs
+
+          | Job | Status | Conclusion |
+          |---|---|---|
+          {chr(10).join(rows) if rows else '| No jobs returned | | |'}
+
+          ## Failed steps
+
+          {chr(10).join(failed) if failed else '- None'}
+
+          A successful result qualifies the LayerSentry login, authenticated
+          header wordmark, browser title and favicon, recursive presentation
+          locale, Operations Control Plane, Host Operations view, Virtual Machine
+          Provisioner, Operating Image Registrar, hosted UI, extension package,
+          embedded UI archive, checksums, and generated credential isolation.
+
+          This result does not claim deployment to a running cluster.
+          """
+          (evidence / 'layersentry-qualified-ui-v3-latest.md').write_text(
+              report,
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Commit current qualification evidence
+        shell: bash
+        env:
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            docs/build-evidence/layersentry-qualified-ui-v3-latest.md \
+            docs/build-evidence/layersentry-qualified-ui-v3-jobs.json
+
+          if git diff --cached --quiet; then
+            echo 'Qualification diagnostics are already current.'
+            exit 0
+          fi
+
+          git commit -m "ci(layersentry): record v3 UI ${CONCLUSION} for ${HEAD_SHA}"
+          git pull --rebase origin release-layersentry-v1.8.2
+          git push origin HEAD:release-layersentry-v1.8.2
