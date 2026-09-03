@@ -9,9 +9,13 @@ on:
       - package.json
       - yarn.lock
       - pkg/harvester/**
+      - scripts/apply-layersentry-shell-branding.mjs
       - scripts/build-embedded
       - scripts/build-pkg.sh
       - scripts/ci-build-pkg.sh
+      - scripts/validate-generated-credential-isolation.mjs
+      - scripts/validate-layersentry-branding.mjs
+      - scripts/validate-layersentry-operations-ui.mjs
       - scripts/version
   workflow_dispatch:
 
@@ -28,7 +32,7 @@ jobs:
     timeout-minutes: 75
     env:
       CI_BUILD_TAG: v1.8.2
-      EXPECTED_UI_SOURCE_COMMIT: c22ca7d979675290977c6b1381ab368d72ceeb66
+      EXPECTED_UI_SOURCE_COMMIT: 043fc4fe9cb10fe3e30b0c624e43cbb1dab77a13
     steps:
       - name: Checkout exact LayerSentry UI source
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -52,9 +56,12 @@ jobs:
           NODE
           test -s pkg/harvester/icon.svg
           test -s pkg/harvester/config/layersentry-cluster.js
+          test -s pkg/harvester/components/layersentry/OperationsDashboard.vue
           test -s pkg/harvester/l10n/layersentry-en-us.yaml
+          test -s pkg/harvester/l10n/layersentry-operations-en-us.yaml
           test -s pkg/harvester/styles/layersentry/index.scss
           grep -F 'LayerSentry' pkg/harvester/l10n/layersentry-en-us.yaml
+          grep -F 'Operations Control Plane' pkg/harvester/l10n/layersentry-operations-en-us.yaml
           git rev-parse HEAD
 
       - name: Setup Node 24 and Yarn Classic
@@ -68,9 +75,12 @@ jobs:
         run: |
           set -euxo pipefail
           npm install --global yarn@1.22.22
-          yarn install --frozen-lockfile
+          yarn install --frozen-lockfile --network-timeout 600000
           node --version
           yarn --version
+
+      - name: Validate LayerSentry source contracts
+        run: yarn validate:layersentry
 
       - name: Lint exact release source
         shell: bash
@@ -90,6 +100,8 @@ jobs:
           find ui-build-inspection/dashboard -type f -printf '%p\t%s bytes\n' | sort > ui-build-inspection/dashboard-files.txt
           test "$(find ui-build-inspection/dashboard -type f | wc -l)" -gt 10
           grep -R -a -F -m 1 'LayerSentry' ui-build-inspection/dashboard
+          grep -R -a -F -m 1 'Operations Control Plane' ui-build-inspection/dashboard
+          node scripts/validate-generated-credential-isolation.mjs ui-build-inspection/dashboard
 
       - name: Build embedded LayerSentry Harvester plugin tarball
         id: plugin
@@ -103,6 +115,8 @@ jobs:
           find ui-build-inspection/plugin -type f -printf '%p\t%s bytes\n' | sort > ui-build-inspection/plugin-files.txt
           test "$(find ui-build-inspection/plugin -type f | wc -l)" -gt 1
           grep -R -a -F -m 1 'LayerSentry' ui-build-inspection/plugin
+          grep -R -a -F -m 1 'Operations Control Plane' ui-build-inspection/plugin
+          node scripts/validate-generated-credential-isolation.mjs ui-build-inspection/plugin
 
       - name: Prepare immutable offline UI evidence
         shell: bash
@@ -153,10 +167,15 @@ jobs:
             intendedHarvesterDockerfileLocation: /usr/share/harvester/harvester/v1/harvester/plugin-assets
           qualification:
             sourceIdentity: PASS
+            brandingContract: PASS
+            advancedOperationsUi: PASS
             lint: PASS
             build: PASS
+            generatedCredentialIsolation: PASS
             LayerSentryMarkerInDashboardOutput: PASS
             LayerSentryMarkerInPluginOutput: PASS
+            operationsControlPlaneInDashboardOutput: PASS
+            operationsControlPlaneInPluginOutput: PASS
             embeddedInHarvesterImage: false
             embeddedInLayerSentryIso: false
           EOF
@@ -171,7 +190,7 @@ jobs:
 
           Verify the extracted bundle with \`sha512sum -c SHA512SUMS\` before use.
 
-          These assets are build-qualified only. They are not yet proven inside a Harvester image or LayerSentry ISO.
+          These assets passed LayerSentry branding, advanced operations UI, lint, build, and generated credential-isolation checks. They are not yet proven inside a Harvester image or LayerSentry ISO.
           EOF
 
           cat layersentry-offline-ui-assets/manifest.yaml
@@ -186,6 +205,9 @@ jobs:
             echo "- Dashboard SHA-512: \`${dashboard_sha512}\`"
             echo "- Plugin bytes: \`${plugin_bytes}\`"
             echo "- Plugin SHA-512: \`${plugin_sha512}\`"
+            echo '- LayerSentry source contracts: `PASS`'
+            echo '- Advanced operations dashboard markers: `PASS`'
+            echo '- Generated credential isolation: `PASS`'
             echo '- Extracted bundle checksum verification: `sha512sum -c SHA512SUMS`'
             echo '- Harvester image/ISO integration remains pending'
           } >> "$GITHUB_STEP_SUMMARY"
