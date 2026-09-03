@@ -1,0 +1,110 @@
+name: Publish Qualified LayerSentry UI
+
+on:
+  workflow_run:
+    workflows:
+      - LayerSentry v1.8.2 UI Delivery
+    types:
+      - completed
+    branches:
+      - release-layersentry-v1.8.2
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: publish-qualified-layersentry-ui-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  publish-qualified-ui:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout release metadata source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: release-layersentry-v1.8.2
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Download qualified delivery artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: layersentry-v1.8.2-ui-delivery-${{ github.event.workflow_run.id }}
+          path: delivery
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Verify delivery checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s delivery/SHA256SUMS
+          sha256sum --check delivery/SHA256SUMS
+          grep -F 'Product: LayerSentry' delivery/DELIVERY-MANIFEST.txt
+          grep -F 'Dashboard identity marker: layersentry-operations-dashboard' delivery/DELIVERY-MANIFEST.txt
+
+      - name: Assemble immutable release archive
+        id: release
+        shell: bash
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          short_sha="${HEAD_SHA:0:12}"
+          tag="layersentry-ui-v1.8.2-${short_sha}"
+          archive="layersentry-ui-v1.8.2-${short_sha}.tar.gz"
+
+          tar --sort=name \
+            --mtime='UTC 2020-01-01' \
+            --owner=0 \
+            --group=0 \
+            --numeric-owner \
+            -czf "$archive" \
+            -C delivery .
+          sha256sum "$archive" > "${archive}.sha256"
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Publish qualified prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag }}
+          ARCHIVE: ${{ steps.release.outputs.archive }}
+          SHORT_SHA: ${{ steps.release.outputs.short_sha }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+
+          notes=$(cat <<EOF
+          Qualified LayerSentry v1.8.2 browser, hosted, extension, and embedded UI delivery.
+
+          Source commit: ${HEAD_SHA}
+          Qualification workflow run: ${RUN_ID}
+          Technical compatibility identity remains harvester where required by APIs and CRDs.
+          Customer-visible product identity is LayerSentry.
+
+          This prerelease is a build input. It does not itself claim deployment to a running cluster.
+          EOF
+          )
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ARCHIVE" "${ARCHIVE}.sha256" --clobber
+          else
+            gh release create "$TAG" \
+              "$ARCHIVE" \
+              "${ARCHIVE}.sha256" \
+              --target "$HEAD_SHA" \
+              --prerelease \
+              --title "LayerSentry UI v1.8.2 (${SHORT_SHA})" \
+              --notes "$notes"
+          fi
