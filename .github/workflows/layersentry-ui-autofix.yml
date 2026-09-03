@@ -1,0 +1,66 @@
+name: LayerSentry UI source autofix
+
+on:
+  push:
+    branches:
+      - release-layersentry-v1.8.2
+    paths:
+      - '.github/workflows/layersentry-ui-autofix.yml'
+      - 'pkg/harvester/components/layersentry/OperationsDashboard.vue'
+      - 'pkg/harvester/utils/layersentry-branding.js'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: layersentry-ui-autofix-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  format:
+    name: Format and verify LayerSentry UI source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22
+
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      - name: Apply ESLint autofixes
+        run: yarn lint:fix
+
+      - name: Verify zero-warning lint
+        run: yarn lint
+
+      - name: Commit formatted source when required
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            pkg/harvester/components/layersentry/OperationsDashboard.vue \
+            pkg/harvester/utils/layersentry-branding.js
+
+          if git diff --cached --quiet; then
+            echo 'LayerSentry UI source already conforms to lint rules.'
+            exit 0
+          fi
+
+          git config user.name 'layersentry-ci'
+          git config user.email '73125939+adaptgurus@users.noreply.github.com'
+          git commit -m 'style(layersentry): apply UI lint fixes'
+          git push origin HEAD:release-layersentry-v1.8.2
