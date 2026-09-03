@@ -24,11 +24,13 @@ export default function (plugin: IPlugin) {
   // Auto-import model, detail, edit from the folders
   importTypes(plugin);
 
-  // Merge the LayerSentry presentation copy into Harvester's complete locale.
-  // Translation keys remain harvester.* to preserve compatibility.
+  // Merge LayerSentry presentation and operations copy into Harvester's complete locale.
+  // Translation keys remain harvester.* where compatibility requires them.
   const baseEnUs = require('./l10n/en-us.yaml');
   const layersentryEnUs = require('./l10n/layersentry-en-us.yaml');
-  const mergedEnUs = mergeWithReplace(baseEnUs, layersentryEnUs, { mutateOriginal: false });
+  const operationsEnUs = require('./l10n/layersentry-operations-en-us.yaml');
+  const brandedEnUs = mergeWithReplace(baseEnUs, layersentryEnUs, { mutateOriginal: false });
+  const mergedEnUs = mergeWithReplace(brandedEnUs, operationsEnUs, { mutateOriginal: false });
 
   plugin.register('l10n', 'en-us', mergedEnUs);
 
