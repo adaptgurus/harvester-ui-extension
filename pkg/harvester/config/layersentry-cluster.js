@@ -1,24 +1,27 @@
 import { getVendor, setVendor } from '@shell/config/private-label';
 import * as harvesterCluster from './harvester-cluster';
+import { installLayerSentryBrowserBranding } from '../utils/layersentry-branding';
 
 const LAYERSENTRY_VENDOR = 'LayerSentry';
-const UPSTREAM_DEFAULT_VENDOR = 'Harvester';
+const UPSTREAM_DEFAULT_VENDORS = new Set(['', 'Rancher', 'Harvester']);
 const LAYERSENTRY_LOGO = require('../assets/layersentry/layer-sentry-icon.svg');
 
 function markLayerSentryDocument() {
   if (typeof document !== 'undefined') {
     document.documentElement.setAttribute('data-product-brand', 'layersentry');
+    document.documentElement.setAttribute('data-layersentry-theme', 'operations');
   }
 }
 
 export function syncLayerSentrySingleProductBranding(store) {
   const vendor = getVendor();
 
-  if (!vendor || vendor === UPSTREAM_DEFAULT_VENDOR) {
+  if (UPSTREAM_DEFAULT_VENDORS.has(vendor || '')) {
     setVendor(LAYERSENTRY_VENDOR);
   }
 
   markLayerSentryDocument();
+  installLayerSentryBrowserBranding();
 
   const current = store.getters['isSingleProduct'];
 
@@ -29,6 +32,7 @@ export function syncLayerSentrySingleProductBranding(store) {
   store.dispatch('setIsSingleProduct', {
     ...current,
     logo:              LAYERSENTRY_LOGO,
+    afterLoginLogo:    LAYERSENTRY_LOGO,
     supportCustomLogo: true,
   });
 }
