@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="title desc">
+  <title id="title">LayerSentry secure cloud fabric</title>
+  <desc id="desc">A secure private cloud fabric with protected compute, storage, and network layers.</desc>
+  <rect width="1000" height="1000" fill="#07182d"/>
+  <g stroke="#15364d" stroke-width="1" opacity="0.7">
+    <path d="M0 125h1000M0 250h1000M0 375h1000M0 500h1000M0 625h1000M0 750h1000M0 875h1000"/>
+    <path d="M125 0v1000M250 0v1000M375 0v1000M500 0v1000M625 0v1000M750 0v1000M875 0v1000"/>
+  </g>
+  <circle cx="780" cy="188" r="118" fill="#0b2941"/>
+  <circle cx="780" cy="188" r="78" fill="none" stroke="#2d98aa" stroke-width="4" opacity="0.75"/>
+  <path d="M780 112 838 145v68l-58 33-58-33v-68Z" fill="#0e7386"/>
+  <path d="M780 132 820 155v47l-40 23-40-23v-47Z" fill="#ffffff" opacity="0.96"/>
+  <path d="M780 145 808 161v33l-28 16-28-16v-33Z" fill="#35a6b8"/>
+
+  <g transform="translate(150 245)">
+    <rect x="0" y="0" width="520" height="360" rx="12" fill="#0b2238" stroke="#2d536b" stroke-width="2"/>
+    <rect x="30" y="34" width="460" height="66" rx="6" fill="#102f47"/>
+    <circle cx="63" cy="67" r="10" fill="#35a6b8"/>
+    <path d="M92 58h154M92 76h104" stroke="#b9d5df" stroke-width="8" stroke-linecap="round" opacity="0.78"/>
+    <path d="M386 60h72M386 77h52" stroke="#61c1cf" stroke-width="7" stroke-linecap="round" opacity="0.78"/>
+
+    <g transform="translate(30 128)">
+      <rect width="136" height="194" rx="6" fill="#0d2b42" stroke="#2d536b"/>
+      <rect x="22" y="24" width="92" height="18" rx="3" fill="#35a6b8"/>
+      <rect x="22" y="58" width="92" height="17" rx="3" fill="#17455d"/>
+      <rect x="22" y="91" width="92" height="17" rx="3" fill="#17455d"/>
+      <rect x="22" y="124" width="92" height="17" rx="3" fill="#17455d"/>
+      <circle cx="32" cy="164" r="5" fill="#54c892"/>
+      <path d="M47 164h49" stroke="#b9d5df" stroke-width="6" stroke-linecap="round"/>
+    </g>
+
+    <g transform="translate(192 128)">
+      <rect width="136" height="194" rx="6" fill="#0d2b42" stroke="#2d536b"/>
+      <path d="M34 49 68 30l34 19v38L68 106 34 87Z" fill="#0e7386"/>
+      <path d="M68 43 91 56v25L68 94 45 81V56Z" fill="#ffffff" opacity="0.94"/>
+      <circle cx="32" cy="164" r="5" fill="#54c892"/>
+      <path d="M47 164h49" stroke="#b9d5df" stroke-width="6" stroke-linecap="round"/>
+    </g>
+
+    <g transform="translate(354 128)">
+      <rect width="136" height="194" rx="6" fill="#0d2b42" stroke="#2d536b"/>
+      <ellipse cx="68" cy="47" rx="39" ry="17" fill="#35a6b8"/>
+      <path d="M29 47v64c0 9 17 17 39 17s39-8 39-17V47" fill="#0e7386"/>
+      <path d="M29 72c0 9 17 17 39 17s39-8 39-17M29 96c0 9 17 17 39 17s39-8 39-17" fill="none" stroke="#75ced8" stroke-width="4"/>
+      <circle cx="32" cy="164" r="5" fill="#54c892"/>
+      <path d="M47 164h49" stroke="#b9d5df" stroke-width="6" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <g fill="none" stroke="#35a6b8" stroke-width="4" opacity="0.85">
+    <path d="M670 425h102c41 0 74-33 74-74v-35"/>
+    <path d="M412 605v74c0 40 33 73 73 73h106"/>
+    <path d="M150 425H86c-41 0-74 33-74 74v83"/>
+  </g>
+  <g fill="#61c1cf">
+    <circle cx="772" cy="425" r="8"/>
+    <circle cx="846" cy="316" r="8"/>
+    <circle cx="591" cy="752" r="8"/>
+    <circle cx="12" cy="582" r="8"/>
+  </g>
+
+  <g transform="translate(150 675)">
+    <text x="0" y="0" fill="#ffffff" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">Operate with confidence.</text>
+    <text x="0" y="45" fill="#9fc6d3" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19">Compute, storage, network, protection, and security</text>
+    <text x="0" y="76" fill="#9fc6d3" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19">from one controlled private-cloud plane.</text>
+    <g transform="translate(0 122)">
+      <rect width="176" height="40" rx="4" fill="#0e7386"/>
+      <circle cx="22" cy="20" r="6" fill="#7de0b2"/>
+      <text x="39" y="26" fill="#ffffff" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="600">CONTROL PLANE</text>
+    </g>
+  </g>
+</svg>
