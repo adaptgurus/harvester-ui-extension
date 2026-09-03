@@ -32,19 +32,20 @@ jobs:
     timeout-minutes: 75
     env:
       CI_BUILD_TAG: v1.8.2
-      EXPECTED_UI_SOURCE_COMMIT: 043fc4fe9cb10fe3e30b0c624e43cbb1dab77a13
+      QUALIFIED_UI_BASELINE: 043fc4fe9cb10fe3e30b0c624e43cbb1dab77a13
     steps:
       - name: Checkout exact LayerSentry UI source
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
-          ref: release-layersentry-v1.8.2
-          fetch-depth: 0
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
 
-      - name: Verify immutable source ancestry and release identity
+      - name: Verify exact source and release identity
         shell: bash
         run: |
           set -euxo pipefail
-          git merge-base --is-ancestor "$EXPECTED_UI_SOURCE_COMMIT" HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           node - <<'NODE'
           const root = require('./package.json');
           const pkg = require('./pkg/harvester/package.json');
@@ -154,7 +155,8 @@ jobs:
             repository: adaptgurus/harvester-ui-extension
             branch: release-layersentry-v1.8.2
             commit: ${source_commit}
-            requiredAncestor: ${EXPECTED_UI_SOURCE_COMMIT}
+            qualifiedInterfaceBaseline: ${QUALIFIED_UI_BASELINE}
+            checkoutMatchedWorkflowSha: true
           dashboard:
             filename: v1.8.2.tar.gz
             bytes: ${dashboard_bytes}
