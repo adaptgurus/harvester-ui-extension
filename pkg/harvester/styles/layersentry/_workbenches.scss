@@ -1,0 +1,299 @@
+.layersentry-route-context {
+  align-items: stretch;
+  background: var(--ls-nav-bg);
+  border: 1px solid var(--ls-nav-border);
+  border-left: 5px solid var(--ls-accent);
+  box-shadow: var(--ls-shadow-soft);
+  color: var(--ls-nav-text);
+  display: flex;
+  gap: 28px;
+  justify-content: space-between;
+  margin: 0 0 22px;
+  min-height: 104px;
+  padding: 18px 20px;
+}
+
+.layersentry-route-context__identity {
+  min-width: 0;
+}
+
+.layersentry-route-context__eyebrow {
+  color: #91dbe4;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  margin: 0 0 5px;
+  text-transform: uppercase;
+}
+
+.layersentry-route-context__title-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.layersentry-route-context__title {
+  color: #ffffff;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.layersentry-route-context__badge {
+  background: #123d50;
+  border: 1px solid #2e687b;
+  color: #d5f2f5;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  padding: 4px 7px;
+  text-transform: uppercase;
+}
+
+.layersentry-route-context__description {
+  color: var(--ls-nav-text-muted);
+  font-size: 12px;
+  line-height: 1.48;
+  margin: 7px 0 0;
+  max-width: 880px;
+}
+
+.layersentry-route-context__rail {
+  align-items: center;
+  border-left: 1px solid var(--ls-nav-border);
+  display: grid;
+  flex: 0 0 270px;
+  gap: 5px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-left: 20px;
+}
+
+.layersentry-route-context__rail span {
+  align-items: center;
+  border: 1px solid #2c5267;
+  color: #9fc6d3;
+  display: inline-flex;
+  font-size: 8px;
+  font-weight: 800;
+  justify-content: center;
+  letter-spacing: 0.09em;
+  min-height: 27px;
+  padding: 4px 6px;
+}
+
+html[data-layersentry-view='hosts'] .resource-table,
+html[data-layersentry-view='virtual-machines'] .resource-table,
+html[data-layersentry-view='images'] .resource-table,
+html[data-layersentry-view='storage'] .resource-table,
+html[data-layersentry-view='network'] .resource-table,
+html[data-layersentry-view='protection'] .resource-table,
+html[data-layersentry-view='observability'] .resource-table {
+  border: 1px solid var(--ls-border);
+  box-shadow: var(--ls-shadow-soft);
+  overflow: hidden;
+}
+
+html[data-layersentry-view='hosts'] table tbody tr,
+html[data-layersentry-view='virtual-machines'] table tbody tr,
+html[data-layersentry-view='images'] table tbody tr {
+  transition: background-color var(--ls-transition-fast), box-shadow var(--ls-transition-fast);
+}
+
+html[data-layersentry-view='hosts'] table tbody tr:hover,
+html[data-layersentry-view='virtual-machines'] table tbody tr:hover,
+html[data-layersentry-view='images'] table tbody tr:hover {
+  box-shadow: inset 4px 0 0 var(--ls-accent);
+}
+
+html[data-layersentry-view='hosts'] table tbody td,
+html[data-layersentry-view='virtual-machines'] table tbody td,
+html[data-layersentry-view='images'] table tbody td {
+  padding-bottom: 13px;
+  padding-top: 13px;
+}
+
+html[data-layersentry-view='hosts'] .badge-state,
+html[data-layersentry-view='virtual-machines'] .badge-state,
+html[data-layersentry-view='images'] .badge-state,
+html[data-layersentry-view='hosts'] .state,
+html[data-layersentry-view='virtual-machines'] .state,
+html[data-layersentry-view='images'] .state {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+html[data-layersentry-view='vm-create'] .form-nav,
+html[data-layersentry-view='image-create'] .form-nav,
+html[data-layersentry-view='vm-create'] .vertical-tabs,
+html[data-layersentry-view='image-create'] .vertical-tabs,
+html[data-layersentry-view='vm-create'] .step-container,
+html[data-layersentry-view='image-create'] .step-container {
+  background: var(--ls-nav-bg) !important;
+  border: 1px solid var(--ls-nav-border) !important;
+  border-right: 0 !important;
+  color: var(--ls-nav-text) !important;
+  min-width: 210px;
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+
+html[data-layersentry-view='vm-create'] .form-nav a,
+html[data-layersentry-view='image-create'] .form-nav a,
+html[data-layersentry-view='vm-create'] .form-nav button,
+html[data-layersentry-view='image-create'] .form-nav button,
+html[data-layersentry-view='vm-create'] .vertical-tabs a,
+html[data-layersentry-view='image-create'] .vertical-tabs a,
+html[data-layersentry-view='vm-create'] .vertical-tabs button,
+html[data-layersentry-view='image-create'] .vertical-tabs button,
+html[data-layersentry-view='vm-create'] .step-container a,
+html[data-layersentry-view='image-create'] .step-container a {
+  background: transparent !important;
+  border-left: 3px solid transparent !important;
+  border-radius: 0 !important;
+  color: var(--ls-nav-text) !important;
+  font-size: 12px;
+  font-weight: 620;
+  margin: 1px 0;
+  min-height: 38px;
+}
+
+html[data-layersentry-view='vm-create'] .form-nav a:hover,
+html[data-layersentry-view='image-create'] .form-nav a:hover,
+html[data-layersentry-view='vm-create'] .form-nav button:hover,
+html[data-layersentry-view='image-create'] .form-nav button:hover,
+html[data-layersentry-view='vm-create'] .vertical-tabs a:hover,
+html[data-layersentry-view='image-create'] .vertical-tabs a:hover,
+html[data-layersentry-view='vm-create'] .vertical-tabs button:hover,
+html[data-layersentry-view='image-create'] .vertical-tabs button:hover,
+html[data-layersentry-view='vm-create'] .step-container a:hover,
+html[data-layersentry-view='image-create'] .step-container a:hover {
+  background: var(--ls-nav-bg-hover) !important;
+}
+
+html[data-layersentry-view='vm-create'] .form-nav .active,
+html[data-layersentry-view='image-create'] .form-nav .active,
+html[data-layersentry-view='vm-create'] .form-nav .selected,
+html[data-layersentry-view='image-create'] .form-nav .selected,
+html[data-layersentry-view='vm-create'] .vertical-tabs .active,
+html[data-layersentry-view='image-create'] .vertical-tabs .active,
+html[data-layersentry-view='vm-create'] .step-container .active,
+html[data-layersentry-view='image-create'] .step-container .active {
+  background: var(--ls-nav-bg-active) !important;
+  border-left-color: #61c1cf !important;
+  color: #ffffff !important;
+  font-weight: 750;
+}
+
+html[data-layersentry-view='vm-create'] .form-container,
+html[data-layersentry-view='image-create'] .form-container,
+html[data-layersentry-view='vm-create'] .resource-edit,
+html[data-layersentry-view='image-create'] .resource-edit,
+html[data-layersentry-view='vm-create'] .resource-create,
+html[data-layersentry-view='image-create'] .resource-create,
+html[data-layersentry-view='vm-create'] .edit-resource,
+html[data-layersentry-view='image-create'] .edit-resource,
+html[data-layersentry-view='vm-create'] .create-resource,
+html[data-layersentry-view='image-create'] .create-resource,
+html[data-layersentry-view='vm-create'] .tab-container,
+html[data-layersentry-view='image-create'] .tab-container {
+  background: var(--ls-surface);
+  border-color: var(--ls-border) !important;
+}
+
+html[data-layersentry-view='vm-create'] .form-container,
+html[data-layersentry-view='image-create'] .form-container,
+html[data-layersentry-view='vm-create'] .resource-edit,
+html[data-layersentry-view='image-create'] .resource-edit,
+html[data-layersentry-view='vm-create'] .resource-create,
+html[data-layersentry-view='image-create'] .resource-create {
+  box-shadow: var(--ls-shadow-soft);
+}
+
+html[data-layersentry-view='vm-create'] fieldset,
+html[data-layersentry-view='image-create'] fieldset,
+html[data-layersentry-view='vm-create'] .form-section,
+html[data-layersentry-view='image-create'] .form-section,
+html[data-layersentry-view='vm-create'] .section,
+html[data-layersentry-view='image-create'] .section {
+  border-color: var(--ls-border);
+}
+
+html[data-layersentry-view='vm-create'] fieldset > legend,
+html[data-layersentry-view='image-create'] fieldset > legend,
+html[data-layersentry-view='vm-create'] .form-section > h3,
+html[data-layersentry-view='image-create'] .form-section > h3 {
+  color: var(--ls-heading);
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+html[data-layersentry-view='vm-create'] main footer,
+html[data-layersentry-view='image-create'] main footer,
+html[data-layersentry-view='vm-create'] .footer-actions,
+html[data-layersentry-view='image-create'] .footer-actions,
+html[data-layersentry-view='vm-create'] .resource-footer,
+html[data-layersentry-view='image-create'] .resource-footer {
+  background: color-mix(in srgb, var(--ls-surface) 96%, transparent);
+  border-top: 1px solid var(--ls-border);
+  box-shadow: 0 -5px 16px rgba(13, 31, 49, 0.07);
+}
+
+html[data-layersentry-view='vm-create'] .tabs,
+html[data-layersentry-view='image-create'] .tabs {
+  border-bottom-color: var(--ls-border);
+}
+
+html[data-layersentry-view='vm-create'] .tabs .tab.active,
+html[data-layersentry-view='image-create'] .tabs .tab.active {
+  border-bottom-color: var(--ls-accent);
+  color: var(--ls-accent-strong);
+}
+
+@media (max-width: 1050px) {
+  .layersentry-route-context__rail {
+    display: none;
+  }
+
+  html[data-layersentry-view='vm-create'] .form-nav,
+  html[data-layersentry-view='image-create'] .form-nav,
+  html[data-layersentry-view='vm-create'] .vertical-tabs,
+  html[data-layersentry-view='image-create'] .vertical-tabs,
+  html[data-layersentry-view='vm-create'] .step-container,
+  html[data-layersentry-view='image-create'] .step-container {
+    min-width: 175px;
+  }
+}
+
+@media (max-width: 720px) {
+  .layersentry-route-context {
+    min-height: 0;
+    padding: 15px 16px;
+  }
+
+  .layersentry-route-context__title {
+    font-size: 17px;
+  }
+
+  html[data-layersentry-view='vm-create'] .form-nav,
+  html[data-layersentry-view='image-create'] .form-nav,
+  html[data-layersentry-view='vm-create'] .vertical-tabs,
+  html[data-layersentry-view='image-create'] .vertical-tabs,
+  html[data-layersentry-view='vm-create'] .step-container,
+  html[data-layersentry-view='image-create'] .step-container {
+    border-right: 1px solid var(--ls-nav-border) !important;
+    min-width: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .layersentry-route-context,
+  html[data-layersentry-view='hosts'] .resource-table,
+  html[data-layersentry-view='vm-create'] .form-container,
+  html[data-layersentry-view='image-create'] .form-container {
+    border: 1px solid CanvasText;
+    box-shadow: none;
+    forced-color-adjust: auto;
+  }
+}
