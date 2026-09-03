@@ -1,0 +1,16 @@
+ARG BASE_IMAGE=rancher/harvester:v1.8.2
+FROM ${BASE_IMAGE}
+
+ARG LAYERSENTRY_UI_SOURCE_SHA=unknown
+ARG LAYERSENTRY_UI_WORKFLOW_RUN=unknown
+
+LABEL org.opencontainers.image.title="LayerSentry management plane"
+LABEL org.opencontainers.image.description="Harvester-compatible management server with the qualified LayerSentry v1.8.2 browser UI"
+LABEL org.opencontainers.image.vendor="LayerSentry"
+LABEL org.opencontainers.image.version="1.8.2"
+LABEL org.opencontainers.image.revision="${LAYERSENTRY_UI_SOURCE_SHA}"
+LABEL io.layersentry.ui.workflow-run="${LAYERSENTRY_UI_WORKFLOW_RUN}"
+LABEL io.layersentry.compatibility.base="rancher/harvester:v1.8.2"
+
+COPY ui/ /usr/share/harvester/harvester/
+COPY metadata/layersentry-ui-build.json /usr/share/harvester/harvester/layersentry-ui-build.json
