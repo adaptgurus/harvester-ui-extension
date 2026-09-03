@@ -7,9 +7,14 @@ import harvesterCommonStore from './store/harvester-common';
 import harvesterStore from './store/harvester-store';
 import customValidators from './validators';
 import { PRODUCT_NAME } from './config/harvester';
+import { installLayerSentryBrowserBranding } from './utils/layersentry-branding';
 import { defineAsyncComponent } from 'vue';
 import './styles/vue-flow.scss';
 import './styles/layersentry/index.scss';
+
+// Apply the packaged product identity before login and shell components render.
+// Explicit administrator private-label values remain authoritative.
+installLayerSentryBrowserBranding();
 
 // Init the package
 export default function (plugin: IPlugin) {
