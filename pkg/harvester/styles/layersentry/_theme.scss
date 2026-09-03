@@ -1,4 +1,5 @@
 .layersentry-dashboard,
+.layersentry-control-plane,
 .cluster-dashboard-glance,
 .hardware-resource-gauges,
 .layersentry-branding,
@@ -9,23 +10,28 @@
 .layersentry-dashboard h1,
 .layersentry-dashboard h2,
 .layersentry-dashboard h3,
+.layersentry-control-plane h1,
+.layersentry-control-plane h2,
+.layersentry-control-plane h3,
 .layersentry-branding h1,
 .layersentry-branding h2,
 .layersentry-branding h3,
 .layersentry-support h1,
 .layersentry-support h2,
 .layersentry-support h3 {
-  color: var(--ls-text);
+  color: var(--ls-heading);
   letter-spacing: -0.01em;
 }
 
 .layersentry-dashboard a,
+.layersentry-control-plane a,
 .layersentry-branding a,
 .layersentry-support a {
   transition: color var(--ls-transition-fast), text-decoration-color var(--ls-transition-fast);
 }
 
 .layersentry-dashboard :focus-visible,
+.layersentry-control-plane :focus-visible,
 .cluster-dashboard-glance :focus-visible,
 .hardware-resource-gauges :focus-visible,
 .layersentry-branding :focus-visible,
@@ -36,6 +42,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .layersentry-dashboard *,
+  .layersentry-control-plane *,
   .cluster-dashboard-glance *,
   .hardware-resource-gauges *,
   .layersentry-branding *,
@@ -49,6 +56,12 @@
   .cluster-dashboard-glance,
   .resource-gauges > *,
   .hardware-resource-gauges > *,
+  .layersentry-command-header,
+  .layersentry-quick-action,
+  .layersentry-posture-card,
+  .layersentry-resource-card,
+  .layersentry-capacity-card,
+  .layersentry-event-list,
   .layersentry-branding .layersentry-brand-section,
   .layersentry-support .box {
     border: 1px solid CanvasText;
@@ -56,7 +69,8 @@
     forced-color-adjust: auto;
   }
 
-  .cluster-dashboard-glance {
+  .cluster-dashboard-glance,
+  .layersentry-command-header {
     border-left-width: 4px;
   }
 }
