@@ -47,7 +47,7 @@ const shell = read('pkg/harvester/styles/layersentry/_shell.scss');
 const theme = read('pkg/harvester/styles/layersentry/_theme.scss');
 const upgradeHeader = read('pkg/harvester/components/HarvesterUpgradeHeader.vue');
 const browserBranding = read('pkg/harvester/utils/layersentry-branding.js');
-const shellPatch = read('scripts/apply-layersentry-shell-branding.mjs');
+const shellPatch = read('scripts/apply-layersentry-shell-branding-v2.mjs');
 
 // Keep the upstream-compatible dashboard implementation intact for resource and
 // model compatibility, but require the customer route to select LayerSentry's
@@ -161,13 +161,16 @@ requireMarkers(browserBranding, 'browser branding runtime', [
 ]);
 
 requireMarkers(shellPatch, 'locked shell branding patch', [
+  "const PATCH_MARKER = 'LayerSentry packaged shell branding'",
   'layersentry-wordmark.svg',
   'layersentry-wordmark-dark.svg',
   'layersentry-login-landscape.svg',
   "copyAsset(iconSource, join(providerAssetDirectory, 'harvester.svg'))",
+  'replaceFunction(source, \'setTitle\'',
   "link.href = ico",
   "this.customizations.logo || 'layersentry-wordmark.svg'",
   "['Harvester', 'Rancher'].includes(plSetting.value)",
+  '(LayerSentry-{{ harvesterVersion }})',
 ]);
 
 requireMarkers(upgradeHeader, 'upgrade header', [
