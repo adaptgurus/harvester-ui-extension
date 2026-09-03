@@ -8,6 +8,7 @@ import harvesterStore from './store/harvester-store';
 import customValidators from './validators';
 import { PRODUCT_NAME } from './config/harvester';
 import { installLayerSentryBrowserBranding } from './utils/layersentry-branding';
+import { brandLayerSentryLocale } from './utils/layersentry-locale';
 import { defineAsyncComponent } from 'vue';
 import './styles/vue-flow.scss';
 import './styles/layersentry/index.scss';
@@ -24,15 +25,17 @@ export default function (plugin: IPlugin) {
   // Auto-import model, detail, edit from the folders
   importTypes(plugin);
 
-  // Merge LayerSentry presentation and operations copy into Harvester's complete locale.
-  // Translation keys remain harvester.* where compatibility requires them.
+  // Merge LayerSentry presentation and operations copy into the complete locale.
+  // Translation keys remain harvester.* where compatibility requires them, while
+  // every customer-visible value is normalized to the LayerSentry product name.
   const baseEnUs = require('./l10n/en-us.yaml');
   const layersentryEnUs = require('./l10n/layersentry-en-us.yaml');
   const operationsEnUs = require('./l10n/layersentry-operations-en-us.yaml');
   const brandedEnUs = mergeWithReplace(baseEnUs, layersentryEnUs, { mutateOriginal: false });
   const mergedEnUs = mergeWithReplace(brandedEnUs, operationsEnUs, { mutateOriginal: false });
+  const customerEnUs = brandLayerSentryLocale(mergedEnUs);
 
-  plugin.register('l10n', 'en-us', mergedEnUs);
+  plugin.register('l10n', 'en-us', customerEnUs);
 
   // Provide plugin metadata from package.json
   plugin.metadata = require('./package.json');
