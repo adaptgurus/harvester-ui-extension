@@ -1,0 +1,97 @@
+name: LayerSentry Management Server Image Marker v3
+
+on:
+  workflow_run:
+    workflows:
+      - Publish Qualified LayerSentry Management Server Image v3
+    types:
+      - completed
+    branches:
+      - release-layersentry-v1.8.2
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: layersentry-management-server-image-marker-v3
+  cancel-in-progress: false
+
+jobs:
+  persist-qualified-v3-lock:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: release-layersentry-v1.8.2
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download exact v3 image lock
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: layersentry-management-server-v1.8.2-v3-*
+          path: downloaded-lock
+          merge-multiple: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Verify and persist authoritative v3 lock
+        shell: bash
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          set -euo pipefail
+          test -s downloaded-lock/layersentry-management-server-v1.8.2-v3.lock
+          test -s downloaded-lock/SHA256SUMS
+          (
+            cd downloaded-lock
+            sha256sum --check SHA256SUMS
+          )
+          grep -F 'qualification_contract=v3' downloaded-lock/layersentry-management-server-v1.8.2-v3.lock
+          grep -F "source_commit=${HEAD_SHA}" downloaded-lock/layersentry-management-server-v1.8.2-v3.lock
+          grep -F 'digest_reference=ghcr.io/adaptgurus/layersentry-harvester@sha256:' downloaded-lock/layersentry-management-server-v1.8.2-v3.lock
+
+          mkdir -p docs/build-evidence
+          cp downloaded-lock/layersentry-management-server-v1.8.2-v3.lock \
+            docs/build-evidence/layersentry-management-server-v1.8.2-v3.lock
+
+          cat > docs/build-evidence/layersentry-management-server-v1.8.2-v3.md <<EOF
+          # Qualified LayerSentry management-server image v3
+
+          - Product: LayerSentry
+          - Qualification contract: v3
+          - Compatibility base: rancher/harvester:v1.8.2
+          - UI source commit: ${HEAD_SHA}
+          - Image workflow run: ${RUN_ID}
+          - Workflow URL: ${RUN_URL}
+          - Lock file: docs/build-evidence/layersentry-management-server-v1.8.2-v3.lock
+
+          The v3 image contains the fully branded pre-authentication login,
+          browser title and favicon, LayerSentry navigation shell, recursively
+          branded customer locale, and advanced Operations Control Plane.
+          The pushed image was inspected for those markers before this immutable
+          digest lock was persisted.
+
+          Runtime cluster rollout and browser screenshots remain separate gates.
+          EOF
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            docs/build-evidence/layersentry-management-server-v1.8.2-v3.lock \
+            docs/build-evidence/layersentry-management-server-v1.8.2-v3.md
+
+          if git diff --cached --quiet; then
+            echo 'Authoritative v3 image evidence is already current.'
+            exit 0
+          fi
+
+          git commit -m "ci(layersentry): lock v3 management server image for ${HEAD_SHA}"
+          git push origin HEAD:release-layersentry-v1.8.2
