@@ -50,7 +50,7 @@
     "publish-pkgs": "./node_modules/@rancher/shell/scripts/extension/publish",
     "parse-tag-name": "./node_modules/@rancher/shell/scripts/extension/parse-tag-name",
     "commitlint": "commitlint --edit",
-    "postinstall": "node scripts/apply-layersentry-shell-branding.mjs",
+    "postinstall": "node scripts/apply-layersentry-shell-branding-v2.mjs",
     "prepare": "husky",
     "agents:generate": "./scripts/generate-agent-and-persona-mds.sh"
   },
