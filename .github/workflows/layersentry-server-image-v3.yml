@@ -1,0 +1,179 @@
+name: Publish Qualified LayerSentry Management Server Image v3
+
+on:
+  workflow_run:
+    workflows:
+      - LayerSentry v1.8.2 Qualified UI v3
+    types:
+      - completed
+    branches:
+      - release-layersentry-v1.8.2
+
+permissions:
+  actions: read
+  contents: read
+  packages: write
+
+concurrency:
+  group: layersentry-server-image-v3-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  publish-server-image:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout exact qualified source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Download exact v3 UI delivery
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: layersentry-v1.8.2-qualified-ui-v3-${{ github.event.workflow_run.id }}
+          path: delivery
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Verify qualified v3 delivery
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          test -s delivery/SHA256SUMS
+          sha256sum --check delivery/SHA256SUMS
+          grep -F 'Product: LayerSentry' delivery/DELIVERY-MANIFEST.txt
+          grep -F 'Qualification contract: v3' delivery/DELIVERY-MANIFEST.txt
+          grep -F "Source commit: ${EXPECTED_SHA}" delivery/DELIVERY-MANIFEST.txt
+          grep -F 'Login identity: LayerSentry' delivery/DELIVERY-MANIFEST.txt
+          grep -F 'Dashboard identity marker: layersentry-operations-dashboard' delivery/DELIVERY-MANIFEST.txt
+          test -s delivery/hosted-ui/index.html
+          grep -R -a -m 1 'Sign in to LayerSentry' delivery/hosted-ui
+          grep -R -a -m 1 'layersentry-operations-dashboard' delivery/hosted-ui
+
+      - name: Prepare image context
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          rm -rf image-context
+          mkdir -p image-context/ui image-context/metadata
+          cp -a delivery/hosted-ui/. image-context/ui/
+
+          cat > image-context/metadata/layersentry-ui-build.json <<EOF
+          {
+            "product": "LayerSentry",
+            "uiVersion": "1.8.2",
+            "qualificationContract": "v3",
+            "technicalCompatibility": "Harvester v1.8.2",
+            "sourceRepository": "adaptgurus/harvester-ui-extension",
+            "sourceCommit": "${SOURCE_SHA}",
+            "qualificationWorkflowRun": "${RUN_ID}",
+            "loginIdentity": "LayerSentry",
+            "dashboardMarker": "layersentry-operations-dashboard"
+          }
+          EOF
+
+          find image-context -type f -exec touch -d '2020-01-01 00:00:00 UTC' {} +
+
+      - name: Log in to GitHub Container Registry
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push immutable v3 server image
+        id: image
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          short_sha="${SOURCE_SHA:0:12}"
+          immutable="ghcr.io/adaptgurus/layersentry-harvester:v1.8.2-ui-v3-${short_sha}"
+          tracking="ghcr.io/adaptgurus/layersentry-harvester:v1.8.2-ui-v3-qualified"
+
+          docker build \
+            --pull \
+            --file packaging/Dockerfile.layersentry-server \
+            --build-arg BASE_IMAGE=rancher/harvester:v1.8.2 \
+            --build-arg LAYERSENTRY_UI_SOURCE_SHA="$SOURCE_SHA" \
+            --build-arg LAYERSENTRY_UI_WORKFLOW_RUN="$RUN_ID" \
+            --tag "$immutable" \
+            --tag "$tracking" \
+            image-context
+
+          docker push "$immutable"
+          docker push "$tracking"
+          docker pull "$immutable"
+
+          digest_ref="$(docker image inspect "$immutable" --format '{{index .RepoDigests 0}}')"
+          [[ "$digest_ref" =~ ^ghcr\.io/adaptgurus/layersentry-harvester@sha256:[0-9a-f]{64}$ ]]
+
+          echo "immutable=$immutable" >> "$GITHUB_OUTPUT"
+          echo "tracking=$tracking" >> "$GITHUB_OUTPUT"
+          echo "digest_ref=$digest_ref" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Verify pushed image runtime assets
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.immutable }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/layersentry-v3-image-ui
+          container_id="$(docker create "$IMAGE")"
+          trap 'docker rm -f "$container_id" >/dev/null 2>&1 || true' EXIT
+
+          docker cp "$container_id:/usr/share/harvester/harvester" /tmp/layersentry-v3-image-ui
+          test -s /tmp/layersentry-v3-image-ui/index.html
+          test -s /tmp/layersentry-v3-image-ui/layersentry-ui-build.json
+          grep -R -a -m 1 'LayerSentry' /tmp/layersentry-v3-image-ui
+          grep -R -a -m 1 'Sign in to LayerSentry' /tmp/layersentry-v3-image-ui
+          grep -R -a -m 1 'layersentry-operations-dashboard' /tmp/layersentry-v3-image-ui
+          grep -F '"qualificationContract": "v3"' /tmp/layersentry-v3-image-ui/layersentry-ui-build.json
+          grep -F "\"sourceCommit\": \"${SOURCE_SHA}\"" /tmp/layersentry-v3-image-ui/layersentry-ui-build.json
+          grep -F "\"qualificationWorkflowRun\": \"${RUN_ID}\"" /tmp/layersentry-v3-image-ui/layersentry-ui-build.json
+
+      - name: Create immutable image lock
+        shell: bash
+        env:
+          IMMUTABLE: ${{ steps.image.outputs.immutable }}
+          TRACKING: ${{ steps.image.outputs.tracking }}
+          DIGEST_REF: ${{ steps.image.outputs.digest_ref }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          mkdir -p image-lock
+          cat > image-lock/layersentry-management-server-v1.8.2-v3.lock <<EOF
+          product=LayerSentry
+          qualification_contract=v3
+          compatibility_base=rancher/harvester:v1.8.2
+          source_commit=${SOURCE_SHA}
+          qualification_workflow_run=${RUN_ID}
+          immutable_image=${IMMUTABLE}
+          tracking_image=${TRACKING}
+          digest_reference=${DIGEST_REF}
+          EOF
+          sha256sum image-lock/layersentry-management-server-v1.8.2-v3.lock > image-lock/SHA256SUMS
+
+      - name: Upload v3 management-server image lock
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: layersentry-management-server-v1.8.2-v3-${{ steps.image.outputs.short_sha }}
+          path: image-lock/
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 6
