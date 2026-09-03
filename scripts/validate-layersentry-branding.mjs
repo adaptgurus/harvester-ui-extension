@@ -96,7 +96,7 @@ const rootPackage = JSON.parse(read('package.json'));
 const pluginIndex = read('pkg/harvester/index.ts');
 const brandingConfig = read('pkg/harvester/config/layersentry-cluster.js');
 const browserBranding = read('pkg/harvester/utils/layersentry-branding.js');
-const shellPatch = read('scripts/apply-layersentry-shell-branding.mjs');
+const shellPatch = read('scripts/apply-layersentry-shell-branding-v2.mjs');
 const dashboardRoute = read('pkg/harvester/pages/c/_cluster/_resource/index.vue');
 const operationsDashboard = read('pkg/harvester/components/layersentry/OperationsDashboard.vue');
 const brandingPage = read('pkg/harvester/pages/c/_cluster/brand/index.vue');
@@ -118,8 +118,8 @@ assert(packageMetadata.icon.includes('adaptgurus/harvester-ui-extension'), 'the 
 assert(rootPackage.engines?.node === '>=24.0.0', 'the production toolchain must require Node 24 or later');
 assert(rootPackage.scripts?.['validate:layersentry'], 'package.json must expose validate:layersentry');
 assert(
-  rootPackage.scripts?.postinstall === 'node scripts/apply-layersentry-shell-branding.mjs',
-  'the locked shell branding patch must run during dependency installation'
+  rootPackage.scripts?.postinstall === 'node scripts/apply-layersentry-shell-branding-v2.mjs',
+  'the resilient locked shell branding patch must run during dependency installation'
 );
 
 assert(pluginIndex.includes("./styles/layersentry/index.scss"), 'the LayerSentry theme must be loaded');
@@ -148,11 +148,14 @@ assert(browserBranding.includes('document.title = title'), 'browser title synchr
 assert(browserBranding.includes('MutationObserver'), 'browser title changes must remain synchronized');
 assert(browserBranding.includes('data-layersentry-default-favicon'), 'the packaged favicon must be identifiable without overriding custom branding');
 
+assert(shellPatch.includes("const PATCH_MARKER = 'LayerSentry packaged shell branding'"), 'the resilient shell patch identity is missing');
 assert(shellPatch.includes("copyAsset(iconSource, join(providerAssetDirectory, 'harvester.svg'))"), 'the packaged single-product icon must be replaced at build time');
 assert(shellPatch.includes('layersentry-wordmark.svg'), 'the login wordmark must be injected into the locked shell');
 assert(shellPatch.includes('layersentry-login-landscape.svg'), 'the login landscape must be injected into the locked shell');
+assert(shellPatch.includes("replaceFunction(source, 'setTitle'"), 'the browser-title patch must use brace-aware function replacement');
 assert(shellPatch.includes("link.href = ico"), 'the patched shell must use the correct favicon href property');
 assert(shellPatch.includes("['Harvester', 'Rancher'].includes(plSetting.value)"), 'upstream private-label defaults must be normalized on the login page');
+assert(shellPatch.includes('(LayerSentry-{{ harvesterVersion }})'), 'the visible nested-cluster footer must use LayerSentry presentation copy');
 
 assert(dashboardRoute.includes("const LAYERSENTRY_DASHBOARD_RESOURCE = 'harvesterhci.io.dashboard'"), 'the compatibility dashboard resource identity changed or is missing');
 assert(dashboardRoute.includes('OperationsDashboard v-if="isLayerSentryDashboard"'), 'the customer dashboard route does not select the LayerSentry control plane');
