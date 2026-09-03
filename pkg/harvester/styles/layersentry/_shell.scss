@@ -1,0 +1,319 @@
+html[data-product-brand='layersentry'] {
+  --primary: var(--ls-accent);
+  --primary-hover: var(--ls-accent-strong);
+  --primary-active: var(--ls-accent-strong);
+  --link: var(--ls-accent-strong);
+  --link-hover: var(--ls-accent);
+  --body-bg: var(--ls-bg);
+  --body-text: var(--ls-text);
+  --heading-text: var(--ls-heading);
+  --nav-bg: var(--ls-nav-bg);
+  --nav-hover: var(--ls-nav-bg-hover);
+  --nav-active: var(--ls-nav-bg-active);
+  --nav-border: var(--ls-nav-border);
+  --border: var(--ls-border);
+  --box-bg: var(--ls-surface);
+  --input-bg: var(--ls-surface);
+  --input-border: var(--ls-border-strong);
+  --tab-active: var(--ls-accent);
+  background: var(--ls-bg);
+}
+
+html[data-product-brand='layersentry'],
+html[data-product-brand='layersentry'] body,
+html[data-product-brand='layersentry'] #__nuxt,
+html[data-product-brand='layersentry'] #__layout {
+  min-height: 100%;
+}
+
+html[data-product-brand='layersentry'] body {
+  background: var(--ls-bg);
+  color: var(--ls-text);
+}
+
+html[data-product-brand='layersentry'] [data-testid='header'] {
+  background: var(--ls-surface);
+  border-bottom: 1px solid var(--ls-border);
+  box-shadow: 0 2px 9px rgba(13, 31, 49, 0.06);
+  min-height: 58px;
+}
+
+html[data-product-brand='layersentry'] [data-testid='header'] .side-menu-logo {
+  height: 36px;
+  max-width: 190px;
+  object-fit: contain;
+  width: auto;
+}
+
+html[data-product-brand='layersentry'] [data-testid='header'] .product {
+  color: var(--ls-heading);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+html[data-product-brand='layersentry'] [data-testid='header'] .cluster {
+  color: var(--ls-text-muted);
+  font-weight: 600;
+}
+
+html[data-product-brand='layersentry'] .side-nav {
+  background: var(--ls-nav-bg) !important;
+  border-right-color: var(--ls-nav-border) !important;
+}
+
+html[data-product-brand='layersentry'] .side-nav .nav {
+  padding: 9px 7px 12px;
+}
+
+html[data-product-brand='layersentry'] .side-nav .nav a,
+html[data-product-brand='layersentry'] .side-nav .nav button,
+html[data-product-brand='layersentry'] .side-nav .nav h6,
+html[data-product-brand='layersentry'] .side-nav .nav span {
+  color: var(--ls-nav-text) !important;
+}
+
+html[data-product-brand='layersentry'] .side-nav .nav a,
+html[data-product-brand='layersentry'] .side-nav .nav button {
+  border-left: 3px solid transparent;
+  border-radius: var(--ls-radius-sm);
+  min-height: 38px;
+  transition: background-color var(--ls-transition-fast), border-color var(--ls-transition-fast);
+}
+
+html[data-product-brand='layersentry'] .side-nav .nav a:hover,
+html[data-product-brand='layersentry'] .side-nav .nav button:hover {
+  background: var(--ls-nav-bg-hover) !important;
+  text-decoration: none;
+}
+
+html[data-product-brand='layersentry'] .side-nav .nav a.router-link-active,
+html[data-product-brand='layersentry'] .side-nav .nav a.router-link-exact-active,
+html[data-product-brand='layersentry'] .side-nav .nav .active > a,
+html[data-product-brand='layersentry'] .side-nav .nav .active > button {
+  background: var(--ls-nav-bg-active) !important;
+  border-left-color: #61c1cf;
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+html[data-product-brand='layersentry'] .side-nav .footer,
+html[data-product-brand='layersentry'] .side-nav .version {
+  color: var(--ls-nav-text-muted) !important;
+}
+
+html[data-product-brand='layersentry'] .side-nav .footer a,
+html[data-product-brand='layersentry'] .side-nav .version a {
+  color: #bfe2e8 !important;
+  font-weight: 600;
+}
+
+html[data-product-brand='layersentry'] .main-layout:not(.login),
+html[data-product-brand='layersentry'] main,
+html[data-product-brand='layersentry'] .outlet {
+  background: var(--ls-bg);
+}
+
+html[data-product-brand='layersentry'] h1,
+html[data-product-brand='layersentry'] h2,
+html[data-product-brand='layersentry'] h3,
+html[data-product-brand='layersentry'] h4 {
+  color: var(--ls-heading);
+}
+
+html[data-product-brand='layersentry'] h1 {
+  letter-spacing: -0.025em;
+}
+
+html[data-product-brand='layersentry'] .btn,
+html[data-product-brand='layersentry'] button,
+html[data-product-brand='layersentry'] [role='button'] {
+  border-radius: var(--ls-radius-sm);
+}
+
+html[data-product-brand='layersentry'] .btn.role-primary,
+html[data-product-brand='layersentry'] .btn.bg-primary,
+html[data-product-brand='layersentry'] button.role-primary {
+  background: var(--ls-accent) !important;
+  border-color: var(--ls-accent) !important;
+  color: #ffffff !important;
+  font-weight: 650;
+}
+
+html[data-product-brand='layersentry'] .btn.role-primary:hover,
+html[data-product-brand='layersentry'] .btn.bg-primary:hover,
+html[data-product-brand='layersentry'] button.role-primary:hover {
+  background: var(--ls-accent-strong) !important;
+  border-color: var(--ls-accent-strong) !important;
+}
+
+html[data-product-brand='layersentry'] .btn.role-secondary,
+html[data-product-brand='layersentry'] button.role-secondary {
+  background: var(--ls-surface) !important;
+  border-color: var(--ls-accent) !important;
+  color: var(--ls-accent-strong) !important;
+  font-weight: 650;
+}
+
+html[data-product-brand='layersentry'] input:not([type='checkbox']):not([type='radio']),
+html[data-product-brand='layersentry'] textarea,
+html[data-product-brand='layersentry'] select,
+html[data-product-brand='layersentry'] .vs__dropdown-toggle,
+html[data-product-brand='layersentry'] .labeled-input {
+  background: var(--ls-surface);
+  border-color: var(--ls-border-strong);
+  border-radius: var(--ls-radius-sm);
+}
+
+html[data-product-brand='layersentry'] input:not([type='checkbox']):not([type='radio']):focus,
+html[data-product-brand='layersentry'] textarea:focus,
+html[data-product-brand='layersentry'] select:focus,
+html[data-product-brand='layersentry'] .vs--open .vs__dropdown-toggle {
+  border-color: var(--ls-accent);
+  box-shadow: 0 0 0 2px var(--ls-accent-soft);
+  outline: none;
+}
+
+html[data-product-brand='layersentry'] .resource-table,
+html[data-product-brand='layersentry'] .sortable-table,
+html[data-product-brand='layersentry'] .fixed-header-table,
+html[data-product-brand='layersentry'] .box,
+html[data-product-brand='layersentry'] .card-container {
+  background: var(--ls-surface);
+  border-color: var(--ls-border);
+  border-radius: var(--ls-radius-sm);
+}
+
+html[data-product-brand='layersentry'] table {
+  border-collapse: separate;
+  border-color: var(--ls-border);
+  border-spacing: 0;
+}
+
+html[data-product-brand='layersentry'] table thead th {
+  background: #edf3f6;
+  border-color: var(--ls-border);
+  color: #314b5d;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+html[data-product-brand='layersentry'] table tbody td {
+  border-color: var(--ls-border);
+}
+
+html[data-product-brand='layersentry'] table tbody tr:hover td {
+  background: #f4fafb;
+}
+
+html[data-product-brand='layersentry'] .theme-dark table thead th,
+html[data-product-brand='layersentry'].theme-dark table thead th {
+  background: #162c3b;
+  color: #c5dce5;
+}
+
+html[data-product-brand='layersentry'] .theme-dark table tbody tr:hover td,
+html[data-product-brand='layersentry'].theme-dark table tbody tr:hover td {
+  background: #132937;
+}
+
+html[data-product-brand='layersentry'] .tabs .tab,
+html[data-product-brand='layersentry'] .tab-container .tab {
+  color: var(--ls-text-muted);
+  font-weight: 650;
+}
+
+html[data-product-brand='layersentry'] .tabs .tab.active,
+html[data-product-brand='layersentry'] .tab-container .tab.active,
+html[data-product-brand='layersentry'] .tabs .tab.router-link-active {
+  border-color: var(--ls-accent);
+  color: var(--ls-accent-strong);
+}
+
+html[data-product-brand='layersentry'] .form-nav,
+html[data-product-brand='layersentry'] .vertical-tabs,
+html[data-product-brand='layersentry'] .step-container,
+html[data-product-brand='layersentry'] .tab-container > nav {
+  background: #f0f5f7;
+  border-color: var(--ls-border);
+}
+
+html[data-product-brand='layersentry'] .banner {
+  border-radius: var(--ls-radius-sm);
+}
+
+html[data-product-brand='layersentry'] :focus-visible {
+  outline: 2px solid var(--ls-focus);
+  outline-offset: 2px;
+}
+
+html[data-product-brand='layersentry'] .login {
+  background: var(--ls-surface);
+}
+
+html[data-product-brand='layersentry'] .login .login-panel {
+  background: var(--ls-surface);
+  border-right: 1px solid var(--ls-border);
+}
+
+html[data-product-brand='layersentry'] .login .login-logo {
+  max-height: 92px;
+  max-width: 340px;
+  width: min(340px, 90%);
+}
+
+html[data-product-brand='layersentry'] .login .login-welcome {
+  color: var(--ls-heading);
+  font-size: 27px;
+  letter-spacing: -0.025em;
+  margin-bottom: 6px;
+}
+
+html[data-product-brand='layersentry'] .login .login-column,
+html[data-product-brand='layersentry'] .login .login-alternatives,
+html[data-product-brand='layersentry'] .login .first-login-message,
+html[data-product-brand='layersentry'] .login .login-messages {
+  --login-column-width: 410px;
+}
+
+html[data-product-brand='layersentry'] .login .landscape {
+  background: var(--ls-nav-bg);
+  object-position: center center;
+}
+
+html[data-product-brand='layersentry'] .login .first-login-message {
+  background: #f2f8fa;
+  border: 1px solid var(--ls-accent-border);
+  border-left: 4px solid var(--ls-accent);
+  padding-bottom: 14px;
+  padding-top: 14px;
+}
+
+html[data-product-brand='layersentry'] .theme-dark .login .first-login-message,
+html[data-product-brand='layersentry'].theme-dark .login .first-login-message {
+  background: #102b39;
+}
+
+@media (max-width: 900px) {
+  html[data-product-brand='layersentry'] .login .landscape {
+    display: none;
+  }
+
+  html[data-product-brand='layersentry'] .login .login-panel {
+    border-right: 0;
+    flex-basis: 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-product-brand='layersentry'] *,
+  html[data-product-brand='layersentry'] *::before,
+  html[data-product-brand='layersentry'] *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
