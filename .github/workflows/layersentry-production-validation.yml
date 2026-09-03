@@ -130,17 +130,8 @@ jobs:
       - name: Validate generated browser package
         run: node scripts/validate-layersentry-branding.mjs --dist "${{ steps.package.outputs.bundle_dir }}"
 
-      - name: Reject enrollment material from browser output
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -R -a -E -m 1 \
-            'bootstrap-credentials\.json|nodePassword|clusterToken|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|apiVersion:[[:space:]]*v1[[:space:]]+clusters:' \
-            dist-pkg; then
-            echo 'Credential, kubeconfig, or private-key marker detected in generated browser output.' >&2
-            exit 1
-          fi
-          echo 'LAYERSENTRY GENERATED BROWSER CREDENTIAL ISOLATION: PASS'
+      - name: Reject populated credentials from browser output
+        run: node scripts/validate-generated-credential-isolation.mjs dist-pkg
 
       - name: Create package checksums
         shell: bash
