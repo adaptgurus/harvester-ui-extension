@@ -1,0 +1,126 @@
+name: LayerSentry v1.8.2 UI Delivery
+
+on:
+  push:
+    branches:
+      - release-layersentry-v1.8.2
+    paths:
+      - 'pkg/harvester/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.nvmrc'
+      - '.github/workflows/layersentry-v1.8.2-ui-delivery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: layersentry-v1.8.2-ui-delivery-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+
+jobs:
+  build-delivery:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout exact release source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22
+
+      - name: Install locked dependencies and apply LayerSentry shell branding
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      - name: Validate source and lint with zero warnings
+        run: |
+          yarn validate:layersentry
+          yarn lint
+
+      - name: Build extension package
+        run: yarn build-pkg harvester
+
+      - name: Validate extension browser output
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t package_dirs < <(
+            find dist-pkg -mindepth 1 -maxdepth 1 -type d -name 'harvester-*' -print | sort
+          )
+          test "${#package_dirs[@]}" -eq 1
+          node scripts/validate-layersentry-branding.mjs --dist "${package_dirs[0]}"
+          node scripts/validate-generated-credential-isolation.mjs dist-pkg
+
+      - name: Build hosted UI
+        run: ./scripts/build-hosted
+
+      - name: Stage hosted UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p delivery/hosted-ui
+          cp -a dist/. delivery/hosted-ui/
+          test "$(find delivery/hosted-ui -type f | wc -l)" -gt 10
+          node scripts/validate-generated-credential-isolation.mjs delivery/hosted-ui
+
+      - name: Build embedded UI archive
+        run: ./scripts/build-embedded
+
+      - name: Stage embedded UI and extension package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p delivery/embedded-ui delivery/extension-package
+
+          mapfile -t archives < <(
+            find dist -type f \( -name '*.tar.gz' -o -name '*.tgz' \) -print | sort
+          )
+          test "${#archives[@]}" -gt 0
+          cp -a "${archives[@]}" delivery/embedded-ui/
+          cp -a dist-pkg/. delivery/extension-package/
+
+      - name: Create delivery manifest and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > delivery/DELIVERY-MANIFEST.txt <<EOF
+          Product: LayerSentry
+          UI version: 1.8.2
+          Source repository: adaptgurus/harvester-ui-extension
+          Source branch: release-layersentry-v1.8.2
+          Source commit: ${GITHUB_SHA}
+          Technical compatibility package: harvester
+          Browser identity: LayerSentry
+          Dashboard identity marker: layersentry-operations-dashboard
+          EOF
+
+          find delivery -type f ! -name SHA256SUMS -print0 |
+            sort -z |
+            xargs -0 sha256sum > delivery/SHA256SUMS
+          test -s delivery/SHA256SUMS
+          grep -R -a -m 1 'layersentry-operations-dashboard' delivery/hosted-ui
+          grep -R -a -m 1 'Operations Control Plane' delivery/extension-package
+
+      - name: Upload qualified LayerSentry UI delivery
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: layersentry-v1.8.2-ui-delivery-${{ github.run_id }}
+          path: delivery/
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 6
