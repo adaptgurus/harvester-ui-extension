@@ -1,0 +1,165 @@
+name: LayerSentry v1.8.2 Qualified UI v3
+
+on:
+  push:
+    branches:
+      - release-layersentry-v1.8.2
+    paths:
+      - 'pkg/harvester/**'
+      - 'scripts/**'
+      - 'packaging/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.nvmrc'
+      - '.github/workflows/layersentry-v1.8.2-qualified-ui-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: layersentry-v1.8.2-qualified-ui-v3-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+
+jobs:
+  qualify-v3-ui:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
+
+    steps:
+      - name: Checkout exact release source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install Yarn Classic
+        run: |
+          npm install --global yarn@1.22.22
+          node --version
+          yarn --version
+
+      - name: Prepare exact LayerSentry v3 build source
+        run: node scripts/prepare-layersentry-v3-build.mjs
+
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      - name: Reapply complete pre-authentication shell branding
+        run: node scripts/apply-layersentry-shell-branding-v3.mjs
+
+      - name: Apply isolated zero-warning source formatting
+        run: yarn lint:fix
+
+      - name: Validate prepared source contract
+        run: |
+          node scripts/validate-layersentry-v3.mjs --source-only
+          yarn lint
+          git diff --check
+
+      - name: Capture deterministic prepared-source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qualified-source
+          git diff --binary > qualified-source/layersentry-v3-prepared-source.patch
+          cp .layersentry-build/preparation-manifest.json qualified-source/
+          git rev-parse HEAD > qualified-source/source-commit.txt
+
+      - name: Build extension package
+        run: yarn build-pkg harvester
+
+      - name: Locate and validate generated extension package
+        id: extension
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t package_dirs < <(
+            find dist-pkg -mindepth 1 -maxdepth 1 -type d -name 'harvester-*' -print | sort
+          )
+          test "${#package_dirs[@]}" -eq 1
+          node scripts/validate-layersentry-v3.mjs --dist "${package_dirs[0]}"
+          node scripts/validate-generated-credential-isolation.mjs dist-pkg
+          echo "package_dir=${package_dirs[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Build hosted standalone UI
+        run: ./scripts/build-hosted
+
+      - name: Validate and stage hosted UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          grep -R -a -m 1 'LayerSentry' dist
+          grep -R -a -m 1 'Operations Control Plane' dist
+          grep -R -a -m 1 'layersentry-operations-dashboard' dist
+          grep -R -a -m 1 'Sign in to LayerSentry' dist
+          grep -R -a -m 1 'Use the unique bootstrap password generated for this LayerSentry cluster.' dist
+          node scripts/validate-generated-credential-isolation.mjs dist
+          mkdir -p delivery/hosted-ui
+          cp -a dist/. delivery/hosted-ui/
+
+      - name: Build embedded UI archive
+        run: ./scripts/build-embedded
+
+      - name: Validate and stage embedded UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t archives < <(
+            find dist -type f \( -name '*.tar.gz' -o -name '*.tgz' \) -print | sort
+          )
+          test "${#archives[@]}" -gt 0
+          mkdir -p delivery/embedded-ui
+          cp -a "${archives[@]}" delivery/embedded-ui/
+
+      - name: Stage extension and exact prepared source evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p delivery/extension-package delivery/source-evidence
+          cp -a dist-pkg/. delivery/extension-package/
+          cp -a qualified-source/. delivery/source-evidence/
+
+      - name: Create qualified delivery manifest and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > delivery/DELIVERY-MANIFEST.txt <<EOF
+          Product: LayerSentry
+          UI version: 1.8.2
+          Qualification contract: v3
+          Source repository: adaptgurus/harvester-ui-extension
+          Source branch: release-layersentry-v1.8.2
+          Source commit: ${GITHUB_SHA}
+          Technical compatibility package: harvester
+          Browser identity: LayerSentry
+          Login identity: LayerSentry
+          Dashboard identity marker: layersentry-operations-dashboard
+          Dashboard title: Operations Control Plane
+          Credential isolation: PASS
+          EOF
+
+          find delivery -type f ! -name SHA256SUMS -print0 |
+            sort -z |
+            xargs -0 sha256sum > delivery/SHA256SUMS
+          test -s delivery/SHA256SUMS
+          sha256sum --check delivery/SHA256SUMS
+
+      - name: Upload qualified LayerSentry v3 UI delivery
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: layersentry-v1.8.2-qualified-ui-v3-${{ github.run_id }}
+          path: delivery/
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 6
