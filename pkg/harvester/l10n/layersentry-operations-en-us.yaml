@@ -1,0 +1,111 @@
+product:
+  harvester: LayerSentry
+
+login:
+  welcome: Welcome to {vendor}
+  howdy: Secure private cloud operations
+  landscapeAlt: LayerSentry secure private cloud control plane
+  loginWithLocal: Sign in to LayerSentry
+  loggingIn: Signing in&hellip;
+  loggedIn: Signed in
+
+setup:
+  defaultPassword:
+    intro: |-
+      <p>This is the first sign-in to LayerSentry. Use the unique bootstrap password generated for this cluster.</p>
+      <p>Run the following command as <b>root</b> on a LayerSentry management node:</p>
+    helmSuffix: |-
+      <p>The bootstrap password is temporary. Sign in as <b>admin</b>, then replace it with a strong permanent password.</p>
+
+nav:
+  group:
+    networks: Connectivity
+    backupAndSnapshot: Protection & Recovery
+    'Monitoring and Logging': Observability
+
+harvester:
+  dashboard:
+    label: Control Plane
+    status:
+      unavailable: Not available
+      positive: Healthy
+      warning: Attention required
+      critical: Degraded
+      clear: Clear
+    commandCenter:
+      eyebrow: LayerSentry secure cloud fabric
+      title: Operations Control Plane
+      description: '{cluster} — unified command, capacity, workload, storage, network, protection, and event visibility.'
+    quickActions:
+      kicker: Common workflows
+      title: Launch operations
+      description: Start validated infrastructure workflows without navigating through low-level resources.
+      createVm:
+        label: Create virtual machine
+        description: Provision compute, storage, network, placement, and security settings.
+      importImage:
+        label: Import operating image
+        description: Register an approved image from URL or local file for workload deployment.
+      createNetwork:
+        label: Create VM network
+        description: Define an isolated workload network and its VLAN connectivity.
+      protection:
+        label: Open protection center
+        description: Review backups, snapshots, recovery points, and restore operations.
+    posture:
+      kicker: Control posture
+      title: Operational readiness
+      description: Current readiness signals for compute, workloads, storage, and recent platform warnings.
+      hosts:
+        label: Hosts ready
+        detail: Management and compute nodes reporting Ready
+      workloads:
+        label: Workloads running
+        detail: Virtual machines currently in a running state
+      storage:
+        label: Storage exceptions
+        detail: No host disk exceptions detected
+        degraded: Host disks require operator attention
+      alerts:
+        label: Active warnings
+        detail: 'Warning events reported during the last {hours} hours'
+    resources:
+      kicker: Infrastructure inventory
+      title: Managed resources
+      description: Direct visibility into the cluster resources that deliver private-cloud services.
+      hosts: Compute hosts
+      virtualMachines: Virtual machines
+      images: Images
+      volumes: Volumes
+      networks: VM networks
+      disks: Host disks
+      ready: '{ready} ready'
+      running: '{running} running'
+      provisioned: Provisioned storage claims
+      available: Available workload networks
+      healthy: No disk errors
+      diskErrors: '{errors} disk errors'
+    capacity:
+      kicker: Resource economics
+      title: Capacity and consumption
+      description: Reserved, allocated, and observed use across compute, memory, and persistent storage.
+      cpu: CPU
+      memory: Memory
+      storage: Storage
+      reserved: Reserved
+      allocated: Allocated
+      used: Used
+      total: 'Total {total}'
+      totalCores: 'Total {total} cores'
+    metrics:
+      kicker: Telemetry
+      title: Performance analytics
+      description: Detailed cluster and virtual-machine telemetry from the enabled monitoring stack.
+    activity:
+      kicker: Audit and events
+      title: Recent platform activity
+      description: Latest infrastructure events across hosts, workloads, storage, networking, and images.
+      event: Platform event
+      noMessage: No additional event detail was supplied.
+      emptyTitle: No recent events
+      emptyDescription: LayerSentry has not received any platform events for this view.
