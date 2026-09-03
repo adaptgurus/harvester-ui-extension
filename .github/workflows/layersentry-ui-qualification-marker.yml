@@ -1,0 +1,82 @@
+name: LayerSentry UI Qualification Marker
+
+on:
+  workflow_run:
+    workflows:
+      - LayerSentry v1.8.2 UI Delivery
+    types:
+      - completed
+    branches:
+      - release-layersentry-v1.8.2
+
+permissions:
+  contents: write
+
+concurrency:
+  group: layersentry-ui-qualification-marker
+  cancel-in-progress: false
+
+jobs:
+  record-delivery-result:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout qualification branch
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: release-layersentry-v1.8.2
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Record immutable delivery evidence
+        shell: bash
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_HTML_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_CREATED_AT: ${{ github.event.workflow_run.created_at }}
+          RUN_UPDATED_AT: ${{ github.event.workflow_run.updated_at }}
+        run: |
+          set -euo pipefail
+          mkdir -p docs/build-evidence
+
+          cat > docs/build-evidence/layersentry-ui-v1.8.2-latest.md <<EOF
+          # LayerSentry v1.8.2 UI delivery evidence
+
+          - Product: LayerSentry
+          - Technical compatibility package: harvester
+          - Source branch: release-layersentry-v1.8.2
+          - Source commit: ${RUN_HEAD_SHA}
+          - Workflow run: ${RUN_ID}
+          - Run number: ${RUN_NUMBER}
+          - Run attempt: ${RUN_ATTEMPT}
+          - Conclusion: ${RUN_CONCLUSION}
+          - Artifact name when successful: layersentry-v1.8.2-ui-delivery-${RUN_ID}
+          - Created: ${RUN_CREATED_AT}
+          - Updated: ${RUN_UPDATED_AT}
+          - Workflow URL: ${RUN_HTML_URL}
+
+          A successful conclusion means that locked dependency installation, the
+          LayerSentry source contract, zero-warning lint, extension packaging,
+          hosted UI build, embedded UI build, generated browser branding checks,
+          credential-isolation checks, and SHA-256 generation all completed.
+
+          This marker does not claim that the UI has been deployed to a running
+          cluster. Runtime rollout and browser verification remain separate gates.
+          EOF
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/build-evidence/layersentry-ui-v1.8.2-latest.md
+
+          if git diff --cached --quiet; then
+            echo 'Qualification evidence is already current.'
+            exit 0
+          fi
+
+          git commit -m "ci(layersentry): record UI delivery ${RUN_CONCLUSION} for ${RUN_HEAD_SHA}"
+          git push origin HEAD:release-layersentry-v1.8.2
