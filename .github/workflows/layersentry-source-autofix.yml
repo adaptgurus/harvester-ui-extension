@@ -1,0 +1,69 @@
+name: LayerSentry Source Autofix
+
+on:
+  push:
+    branches:
+      - release-layersentry-v1.8.2
+    paths:
+      - 'pkg/harvester/**'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/layersentry-source-autofix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: layersentry-source-autofix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-fix-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22
+
+      - name: Install locked dependencies and apply packaged shell branding
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      - name: Apply zero-warning lint corrections
+        run: yarn lint:fix
+
+      - name: Validate LayerSentry source contracts
+        run: yarn validate:layersentry
+
+      - name: Confirm zero-warning lint
+        run: yarn lint
+
+      - name: Commit validated formatting corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo 'No source formatting corrections were required.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- pkg/harvester scripts package.json
+          git commit -m 'style(layersentry): apply validated lint corrections'
+          git push origin HEAD:release-layersentry-v1.8.2
