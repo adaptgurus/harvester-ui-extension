@@ -36,43 +36,83 @@ function forbidMarkers(source, name, markers) {
   }
 }
 
-const dashboard = read('pkg/harvester/list/harvesterhci.io.dashboard.vue');
+const legacyDashboard = read('pkg/harvester/list/harvesterhci.io.dashboard.vue');
+const operationsDashboard = read('pkg/harvester/components/layersentry/OperationsDashboard.vue');
+const resourceRoute = read('pkg/harvester/pages/c/_cluster/_resource/index.vue');
 const locale = read('pkg/harvester/l10n/layersentry-en-us.yaml');
+const operationsLocale = read('pkg/harvester/l10n/layersentry-operations-en-us.yaml');
 const tokens = read('pkg/harvester/styles/layersentry/_tokens.scss');
 const components = read('pkg/harvester/styles/layersentry/_components.scss');
+const shell = read('pkg/harvester/styles/layersentry/_shell.scss');
 const theme = read('pkg/harvester/styles/layersentry/_theme.scss');
 const upgradeHeader = read('pkg/harvester/components/HarvesterUpgradeHeader.vue');
+const browserBranding = read('pkg/harvester/utils/layersentry-branding.js');
+const shellPatch = read('scripts/apply-layersentry-shell-branding.mjs');
 
-requireMarkers(dashboard, 'dashboard', [
+// Keep the upstream-compatible dashboard implementation intact for resource and
+// model compatibility, but require the customer route to select LayerSentry's
+// advanced control plane explicitly.
+requireMarkers(legacyDashboard, 'compatibility dashboard', [
   'class="layersentry-dashboard"',
-  'aria-labelledby="layersentry-dashboard-heading"',
-  'class="layersentry-dashboard-header"',
-  '<dl',
-  ':aria-label="t(\'harvester.dashboard.glanceLabel\')"',
-  `t('harvester.dashboard.events.hosts')`,
-  `t('harvester.dashboard.events.virtualMachines')`,
-  `t('harvester.dashboard.events.volumes')`,
-  `t('harvester.dashboard.events.images')`,
   ':key="resource.resource"',
 ]);
-forbidMarkers(dashboard, 'dashboard', [
-  'label="Hosts"',
-  'label="VMs"',
-  'label="Volumes"',
-  'label="Images"',
+
+requireMarkers(resourceRoute, 'dashboard route adapter', [
+  "const LAYERSENTRY_DASHBOARD_RESOURCE = 'harvesterhci.io.dashboard'",
+  "import OperationsDashboard from '../../../../components/layersentry/OperationsDashboard.vue'",
+  'OperationsDashboard v-if="isLayerSentryDashboard"',
+  '<ResourceList v-else />',
 ]);
 
-requireMarkers(locale, 'locale overlay', [
+requireMarkers(operationsDashboard, 'operations dashboard', [
+  'name:       \'LayerSentryOperationsDashboard\'',
+  'data-testid="layersentry-operations-dashboard"',
+  'class="layersentry-command-header"',
+  `t('harvester.dashboard.commandCenter.title')`,
+  'class="layersentry-quick-actions"',
+  'class="layersentry-posture-grid"',
+  'class="layersentry-resource-grid"',
+  'class="layersentry-capacity-grid"',
+  'class="layersentry-event-list"',
+  'recentWarningEvents',
+  'runningVmCount',
+  'storageStats',
+  'createRoute(resource)',
+  'listRoute(resource)',
+  'aria-live="polite"',
+]);
+forbidMarkers(operationsDashboard, 'operations dashboard', [
+  'linear-gradient(',
+  'radial-gradient(',
+  'conic-gradient(',
+  'label="Hosts"',
+  'label="VMs"',
+]);
+
+requireMarkers(locale, 'branding locale overlay', [
   'operationalOverview: Operational overview',
-  'glanceLabel: LayerSentry cluster release and creation details',
   'openStatus: Open LayerSentry upgrade status',
   'targetRelease: Target release',
   'managementVersion: Management plane',
 ]);
 
+requireMarkers(operationsLocale, 'operations locale overlay', [
+  'harvester: LayerSentry',
+  'label: Control Plane',
+  'title: Operations Control Plane',
+  'title: Launch operations',
+  'title: Operational readiness',
+  'title: Managed resources',
+  'title: Capacity and consumption',
+  'title: Recent platform activity',
+  'Sign in to LayerSentry',
+]);
+
 requireMarkers(tokens, 'design tokens', [
   'color-scheme: light',
   'color-scheme: dark',
+  '--ls-accent:',
+  '--ls-nav-bg:',
   '--ls-status-positive:',
   '--ls-status-warning:',
   '--ls-status-critical:',
@@ -86,18 +126,48 @@ requireMarkers(components, 'component theme', [
   'dt {',
   'dd {',
 ]);
-forbidMarkers(components, 'component theme', [
+
+requireMarkers(shell, 'product shell theme', [
+  "html[data-product-brand='layersentry']",
+  "html[data-product-brand='layersentry'] .side-nav",
+  "html[data-product-brand='layersentry'] [data-testid='header']",
+  "html[data-product-brand='layersentry'] .login",
+  "html[data-product-brand='layersentry'] table thead th",
+  "html[data-product-brand='layersentry'] input:not([type='checkbox'])",
+  '.btn.role-primary',
+  '@media (prefers-reduced-motion: reduce)',
+]);
+forbidMarkers(`${ components }\n${ shell }`, 'production shell styles', [
   'linear-gradient(',
   'radial-gradient(',
   'conic-gradient(',
 ]);
 
 requireMarkers(theme, 'accessibility theme', [
-  '.layersentry-dashboard,',
-  '.layersentry-dashboard :focus-visible',
+  '.layersentry-control-plane,',
+  '.layersentry-control-plane :focus-visible',
   '@media (prefers-reduced-motion: reduce)',
   '@media (forced-colors: active)',
   'forced-color-adjust: auto',
+]);
+
+requireMarkers(browserBranding, 'browser branding runtime', [
+  "export const LAYERSENTRY_VENDOR = 'LayerSentry'",
+  "new Set(['', 'Rancher', 'Harvester'])",
+  "document.documentElement.setAttribute('data-product-brand', 'layersentry')",
+  'document.title = title',
+  'MutationObserver',
+  'data-layersentry-default-favicon',
+]);
+
+requireMarkers(shellPatch, 'locked shell branding patch', [
+  'layersentry-wordmark.svg',
+  'layersentry-wordmark-dark.svg',
+  'layersentry-login-landscape.svg',
+  "copyAsset(iconSource, join(providerAssetDirectory, 'harvester.svg'))",
+  "link.href = ico",
+  "this.customizations.logo || 'layersentry-wordmark.svg'",
+  "['Harvester', 'Rancher'].includes(plSetting.value)",
 ]);
 
 requireMarkers(upgradeHeader, 'upgrade header', [
@@ -118,16 +188,23 @@ const credentialMarkers = [
   'bootstrap-credentials.json',
   'nodePassword',
   'clusterToken',
+  'adminPassword',
 ];
 for (const [name, source] of [
-  ['dashboard', dashboard],
-  ['locale overlay', locale],
+  ['compatibility dashboard', legacyDashboard],
+  ['operations dashboard', operationsDashboard],
+  ['route adapter', resourceRoute],
+  ['branding locale overlay', locale],
+  ['operations locale overlay', operationsLocale],
   ['design tokens', tokens],
   ['component theme', components],
+  ['product shell theme', shell],
   ['accessibility theme', theme],
   ['upgrade header', upgradeHeader],
+  ['browser branding runtime', browserBranding],
+  ['shell branding patch', shellPatch],
 ]) {
   forbidMarkers(source, name, credentialMarkers);
 }
 
-process.stdout.write('LAYERSENTRY OPERATIONS UI, ACCESSIBILITY, AND CREDENTIAL-ISOLATION CONTRACT: PASS\n');
+process.stdout.write('LAYERSENTRY ADVANCED OPERATIONS UI, ACCESSIBILITY, AND CREDENTIAL-ISOLATION CONTRACT: PASS\n');
