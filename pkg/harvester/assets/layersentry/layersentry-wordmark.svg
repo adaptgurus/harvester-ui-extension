@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 92" role="img" aria-labelledby="title desc">
+  <title id="title">LayerSentry</title>
+  <desc id="desc">LayerSentry secure private cloud control plane wordmark.</desc>
+  <g transform="translate(4 8)">
+    <path d="M36 0 68 18 36 36 4 18Z" fill="#0b1f3a"/>
+    <path d="M4 29 36 47 68 29v15L36 62 4 44Z" fill="#0e7386"/>
+    <path d="M4 51 36 69 68 51v15L36 84 4 66Z" fill="#35a6b8"/>
+    <path d="M36 10 55 20.7 36 31.4 17 20.7Z" fill="#ffffff" opacity="0.96"/>
+  </g>
+  <text x="92" y="43" fill="#0b1f3a" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="31" font-weight="700" letter-spacing="-0.7">LayerSentry</text>
+  <text x="94" y="65" fill="#486174" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" letter-spacing="1.7">SECURE PRIVATE CLOUD</text>
+</svg>
