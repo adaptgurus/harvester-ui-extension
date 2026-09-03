@@ -1,0 +1,3 @@
+LayerSentry v1.8.2 qualified UI delivery trigger
+Date: 2026-09-03
+Purpose: validate and package the advanced LayerSentry control plane, full visible browser rebrand, resilient shell branding patch, hosted UI, extension package, and embedded UI archive from one exact source commit.
