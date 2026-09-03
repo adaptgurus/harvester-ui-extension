@@ -95,10 +95,16 @@ const packageMetadata = JSON.parse(read('pkg/harvester/package.json'));
 const rootPackage = JSON.parse(read('package.json'));
 const pluginIndex = read('pkg/harvester/index.ts');
 const brandingConfig = read('pkg/harvester/config/layersentry-cluster.js');
+const browserBranding = read('pkg/harvester/utils/layersentry-branding.js');
+const shellPatch = read('scripts/apply-layersentry-shell-branding.mjs');
+const dashboardRoute = read('pkg/harvester/pages/c/_cluster/_resource/index.vue');
+const operationsDashboard = read('pkg/harvester/components/layersentry/OperationsDashboard.vue');
 const brandingPage = read('pkg/harvester/pages/c/_cluster/brand/index.vue');
 const supportPage = read('pkg/harvester/pages/c/_cluster/support/index.vue');
 const overlayText = read('pkg/harvester/l10n/layersentry-en-us.yaml');
+const operationsOverlayText = read('pkg/harvester/l10n/layersentry-operations-en-us.yaml');
 const overlay = parseYaml(overlayText);
+const operationsOverlay = parseYaml(operationsOverlayText);
 const layersentryStyles = walk(resolve(ROOT, 'pkg/harvester/styles/layersentry'))
   .map((file) => readFileSync(file, 'utf8'))
   .join('\n');
@@ -111,9 +117,15 @@ assert(catalogDisplayName === 'LayerSentry', 'the catalog display name must be L
 assert(packageMetadata.icon.includes('adaptgurus/harvester-ui-extension'), 'the catalog icon must use the controlled repository asset');
 assert(rootPackage.engines?.node === '>=24.0.0', 'the production toolchain must require Node 24 or later');
 assert(rootPackage.scripts?.['validate:layersentry'], 'package.json must expose validate:layersentry');
+assert(
+  rootPackage.scripts?.postinstall === 'node scripts/apply-layersentry-shell-branding.mjs',
+  'the locked shell branding patch must run during dependency installation'
+);
 
 assert(pluginIndex.includes("./styles/layersentry/index.scss"), 'the LayerSentry theme must be loaded');
-assert(pluginIndex.includes("./l10n/layersentry-en-us.yaml"), 'the LayerSentry locale overlay must be loaded');
+assert(pluginIndex.includes("./l10n/layersentry-en-us.yaml"), 'the LayerSentry branding locale overlay must be loaded');
+assert(pluginIndex.includes("./l10n/layersentry-operations-en-us.yaml"), 'the LayerSentry operations locale overlay must be loaded');
+assert(pluginIndex.includes("installLayerSentryBrowserBranding()"), 'browser branding must initialize before the product renders');
 assert(pluginIndex.includes("plugin.addProduct(require('./config/layersentry-cluster'))"), 'the LayerSentry product configuration must be registered');
 
 const vendorIndex = brandingConfig.indexOf('const vendor = getVendor()');
@@ -125,23 +137,46 @@ assert(brandingConfig.includes("setVendor(LAYERSENTRY_VENDOR)"), 'the default ve
 assert(brandingConfig.includes("data-product-brand', 'layersentry'"), 'the runtime document must expose the LayerSentry brand marker');
 assert(brandingConfig.includes('layer-sentry-icon.svg'), 'the single-product header must use the canonical LayerSentry icon');
 assert(brandingConfig.includes('supportCustomLogo: true'), 'custom logo support must remain enabled');
+assert(brandingConfig.includes('afterLoginLogo:'), 'the authenticated single-product shell must retain the LayerSentry icon');
 assert(
   !existsSync(resolve(ROOT, 'pkg/harvester/assets/layersentry/layer-sentry-logo.svg')),
   'the malformed legacy wordmark asset must not be present'
 );
 
-const expectedTranslations = new Map([
-  ['harvester.productLabel', 'LayerSentry'],
-  ['harvester.dashboard.version', 'Platform version'],
-  ['harvester.support.title', 'LayerSentry Support'],
-  ['layersentrySupport.title', 'LayerSentry Support']
-]);
+assert(browserBranding.includes("new Set(['', 'Rancher', 'Harvester'])"), 'upstream default vendors must resolve to LayerSentry');
+assert(browserBranding.includes('document.title = title'), 'browser title synchronization is missing');
+assert(browserBranding.includes('MutationObserver'), 'browser title changes must remain synchronized');
+assert(browserBranding.includes('data-layersentry-default-favicon'), 'the packaged favicon must be identifiable without overriding custom branding');
 
-for (const [key, expected] of expectedTranslations) {
-  assert(get(overlay, key) === expected, `translation ${ key } must equal "${ expected }"`);
+assert(shellPatch.includes("copyAsset(iconSource, join(providerAssetDirectory, 'harvester.svg'))"), 'the packaged single-product icon must be replaced at build time');
+assert(shellPatch.includes('layersentry-wordmark.svg'), 'the login wordmark must be injected into the locked shell');
+assert(shellPatch.includes('layersentry-login-landscape.svg'), 'the login landscape must be injected into the locked shell');
+assert(shellPatch.includes("link.href = ico"), 'the patched shell must use the correct favicon href property');
+assert(shellPatch.includes("['Harvester', 'Rancher'].includes(plSetting.value)"), 'upstream private-label defaults must be normalized on the login page');
+
+assert(dashboardRoute.includes("const LAYERSENTRY_DASHBOARD_RESOURCE = 'harvesterhci.io.dashboard'"), 'the compatibility dashboard resource identity changed or is missing');
+assert(dashboardRoute.includes('OperationsDashboard v-if="isLayerSentryDashboard"'), 'the customer dashboard route does not select the LayerSentry control plane');
+assert(operationsDashboard.includes('data-testid="layersentry-operations-dashboard"'), 'the advanced LayerSentry operations dashboard is missing');
+
+const expectedTranslations = [
+  [overlay, 'harvester.productLabel', 'LayerSentry'],
+  [overlay, 'harvester.dashboard.version', 'Platform version'],
+  [overlay, 'harvester.support.title', 'LayerSentry Support'],
+  [overlay, 'layersentrySupport.title', 'LayerSentry Support'],
+  [operationsOverlay, 'product.harvester', 'LayerSentry'],
+  [operationsOverlay, 'harvester.dashboard.label', 'Control Plane'],
+  [operationsOverlay, 'harvester.dashboard.commandCenter.title', 'Operations Control Plane'],
+  [operationsOverlay, 'login.loginWithLocal', 'Sign in to LayerSentry'],
+];
+
+for (const [source, key, expected] of expectedTranslations) {
+  assert(get(source, key) === expected, `translation ${ key } must equal "${ expected }"`);
 }
 
-for (const value of collectStrings(overlay)) {
+for (const value of [
+  ...collectStrings(overlay),
+  ...collectStrings(operationsOverlay),
+]) {
   const forbidden = [
     /https?:\/\/(?:www\.)?harvesterhci\.io/i,
     /https?:\/\/docs\.harvesterhci\.io/i,
@@ -189,14 +224,20 @@ assert(brandingPage.includes('aria-live="polite"'), 'branding validation errors 
 
 assert(!/(?:linear|radial|conic)-gradient\s*\(/i.test(layersentryStyles), 'LayerSentry production styles must not use gradients');
 assert(layersentryStyles.includes('--ls-brand-navy'), 'LayerSentry design tokens must be loaded');
+assert(layersentryStyles.includes("html[data-product-brand='layersentry']"), 'the product shell theme must be scoped to LayerSentry');
+assert(layersentryStyles.includes('.side-nav'), 'the LayerSentry navigation shell theme is missing');
+assert(layersentryStyles.includes('.login'), 'the LayerSentry login theme is missing');
 
 const assets = [
   validateSvg('pkg/harvester/assets/layersentry/layer-sentry-icon.svg'),
+  validateSvg('pkg/harvester/assets/layersentry/layersentry-wordmark.svg'),
+  validateSvg('pkg/harvester/assets/layersentry/layersentry-wordmark-dark.svg'),
+  validateSvg('pkg/harvester/assets/layersentry/layersentry-login-landscape.svg'),
   validateSvg('pkg/harvester/icon.svg')
 ];
 
 const manifest = {
-  schemaVersion: '1.0',
+  schemaVersion: '1.1',
   product:       'LayerSentry',
   sourceCommit:  process.env.GITHUB_SHA || null,
   generatedAt:   new Date().toISOString(),
@@ -205,12 +246,15 @@ const manifest = {
     packageVersion:           packageMetadata.version,
     displayName:              catalogDisplayName,
     nodeEngine:               rootPackage.engines.node,
-    localeOverlayParsed:      true,
+    localeOverlaysParsed:     true,
     upstreamSupportLinks:     false,
     gradientsPresent:         false,
     brandingImageValidation:  true,
     accessibleImagePreviews:  true,
-    runtimeBrandMarker:       true
+    runtimeBrandMarker:       true,
+    browserTitleBranding:     true,
+    packagedShellBranding:    true,
+    advancedOperationsUi:     true,
   },
   assets,
   bundle: null
@@ -231,6 +275,8 @@ if (!sourceOnly) {
 
   assert(bundleBytes > 500_000, `generated UMD bundle is unexpectedly small: ${ bundleBytes } bytes`);
   assert(bundleText.includes('LayerSentry'), 'generated UMD bundle does not contain LayerSentry presentation copy');
+  assert(bundleText.includes('Operations Control Plane'), 'generated UMD bundle does not contain the advanced operations UI');
+  assert(bundleText.includes('layersentry-operations-dashboard'), 'generated UMD bundle is missing the control-plane identity marker');
 
   manifest.bundle = {
     path:   relative(ROOT, bundle),
@@ -250,4 +296,4 @@ if (!sourceOnly) {
 }
 
 console.log(JSON.stringify(manifest, null, 2));
-console.log('LAYERSENTRY UI BRANDING AND PRODUCTION-SAFETY CONTRACT: PASS');
+console.log('LAYERSENTRY FULL BROWSER, SHELL, AND OPERATIONS BRANDING CONTRACT: PASS');
